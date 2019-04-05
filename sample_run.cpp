@@ -4,10 +4,10 @@
 #include "file_manager.h"
 #include "errors.h"
 #include<cstring>
-
+#include <random>
 using namespace std;
 void printPage(FileHandler* fh);
-
+void createInput(FileManager& fm, char* filename);
 int main() {
 	FileManager fm;
 	
@@ -53,8 +53,17 @@ int main() {
 	// Close the file and destory it
 	fm.CloseFile (fh);
 	fm.DestroyFile ("temp.txt");
-	fh = fm.OpenFile("sort_output1.txt");
+	// fh = fm.OpenFile("sort_output1.txt");
+	// printPage(&fh);
+	// cout<<fh.LastPage().GetPageNum();
+	// ph=fh.LastPage();
+	// fm.CloseFile(fh);
+	createInput(fm,"test_input1");
+	fh = fm.OpenFile("test_input1");
 	printPage(&fh);
+	cout<<fh.hdr.firstFreePage;
+	fm.CloseFile(fh);
+	fm.DestroyFile("test_input1");
 	return 0;
 }
 
@@ -62,9 +71,22 @@ void printPage(FileHandler* fh){
 	PageHandler ph = fh->FirstPage();
 	char* data = ph.GetData();
 	int num;
-	for(int i=0;i<PAGE_SIZE;i=i+4){
+	for(int i=0;i<PAGE_CONTENT_SIZE;i=i+4){
 		memcpy(&num,&data[i],sizeof(int));
 		if (num==-2147483648) break;
 		cout<<num<<endl;
 	}
+}
+void createInput(FileManager& fm, char* filename){
+	FileHandler fh = fm.CreateFile(filename);
+	for(int j=0;j<BUFFER_SIZE;j++){
+		PageHandler ph = fh.NewPage();
+		char* data = ph.GetData();
+		for(int i=0,num;i<PAGE_CONTENT_SIZE;i+=4){
+			num = rand();
+			memcpy(&data[i],&num,sizeof(int));
+		}
+		fh.FlushPage(ph.GetPageNum());
+	}
+	fm.CloseFile(fh);
 }
