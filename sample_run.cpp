@@ -5,6 +5,9 @@
 #include "errors.h"
 #include<cstring>
 #include <random>
+#include <vector>
+#include <list>
+
 using namespace std;
 void printPage(FileHandler* fh);
 void createInput(FileManager& fm, char* filename);
@@ -61,7 +64,7 @@ int main() {
 	createInput(fm,"test_input1");
 	fh = fm.OpenFile("test_input1");
 	printPage(&fh);
-	cout<<fh.hdr.firstFreePage;
+	
 	fm.CloseFile(fh);
 	fm.DestroyFile("test_input1");
 	return 0;
@@ -86,7 +89,32 @@ void createInput(FileManager& fm, char* filename){
 			num = rand();
 			memcpy(&data[i],&num,sizeof(int));
 		}
-		fh.FlushPage(ph.GetPageNum());
+		// fh.FlushPage(ph.GetPageNum());
 	}
 	fm.CloseFile(fh);
 }
+BSResult binarySearch(PageHandler& ph,int t){
+	char* data = ph.GetData();
+	int low = 0;
+	int high = PAGE_CONTENT_SIZE;
+	int mid = (low+high)/2;
+	int _temp_num;
+	while(mid%4==0){
+		memcpy(&_temp_num,&data[mid],sizeof(int));
+		if (_temp_num<t){
+			low=_temp_num+4;
+		}
+		else if (_temp_num>t){
+			high=_temp_num-4;
+		}
+		else{
+			
+		}
+		mid = (low+high)/2;
+	}
+	//  head of vector is -1 for not found 0 for left 1 for middle 2 for right 
+}
+struct BSResult{
+	char type; //L for seek left R for seek right F for finished E for empty l for immediate left, r for immediate right
+	list<pair<int,int>> result;
+};
