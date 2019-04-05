@@ -6,11 +6,11 @@
 #include<cstring>
 
 using namespace std;
-
+void printPage(FileHandler* fh);
 
 int main() {
 	FileManager fm;
-
+	
 	// Create a brand new file
 	FileHandler fh = fm.CreateFile("temp.txt");
 	cout << "File created " << endl;
@@ -53,4 +53,18 @@ int main() {
 	// Close the file and destory it
 	fm.CloseFile (fh);
 	fm.DestroyFile ("temp.txt");
+	fh = fm.OpenFile("sort_output1.txt");
+	printPage(&fh);
+	return 0;
+}
+
+void printPage(FileHandler* fh){
+	PageHandler ph = fh->FirstPage();
+	char* data = ph.GetData();
+	int num;
+	for(int i=0;i<PAGE_SIZE;i=i+4){
+		memcpy(&num,&data[i],sizeof(int));
+		if (num==-2147483648) break;
+		cout<<num<<endl;
+	}
 }
