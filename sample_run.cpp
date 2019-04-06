@@ -11,6 +11,7 @@
 
 #define LowerBoundBS 0
 #define UpperBoundBS -1
+#define Min_Int -2147483648
 
 using namespace std;
 void printPage(FileHandler* fh);
@@ -81,8 +82,8 @@ int main() {
 	// cout<<fh.LastPage().GetPageNum();
 	// ph=fh.LastPage();
 	// fm.CloseFile(fh);
-	createInput(fm,"test_input1");
-	fh = fm.OpenFile("test_input1");
+	// createInput(fm,"test_input1");
+	// fh = fm.OpenFile("test_input1");
 	// for(int i=0;i<60;i++){
 	// 	PageHandler ph = fh.FirstPage();
 	// 	cout<<&ph<<endl;
@@ -91,16 +92,18 @@ int main() {
 	// cout<<fh.UnpinPage(fh.FirstPage().GetPageNum())<<endl;
 	// cout<<fh.UnpinPage(fh.FirstPage().GetPageNum())<<endl;
 	// printPage(&fh);
-	ph = fh.FirstPage();
+	// ph = fh.FirstPage();
 	
-	BSResult bsr = SearchLastPage(ph,4090,'L');
-	cout<<bsr.type<<endl;
-	cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
-	printPage(&fh);
-	fm.CloseFile(fh);
-	fm.DestroyFile("test_input1");
-	
+	// BSResult bsr = SearchLastPage(ph,4090,'L');
+	// cout<<bsr.type<<endl;
+	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
+	// printPage(&fh);
+	// fm.CloseFile(fh);
+	// fm.DestroyFile("test_input1");
 
+	// Open Insert File
+	fh = fm.OpenFile("insert_testcase1.txt");
+	printPage(&fh);
 	return 0;
 }
 
@@ -128,6 +131,7 @@ void createInput(FileManager& fm, char* filename){
 		// fh.FlushPage(ph.GetPageNum());
 	}
 	fm.CloseFile(fh);
+	cout<<"Input created"<<endl;
 }
 
 BSResult lastPageSearch (PageHandler& ph,int t,char typeS){
@@ -372,4 +376,19 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 			}
 		}		
 	}
+}
+
+int ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
+	char *data = ph.GetData();
+	int t,r;
+	bool flag = false;
+	memcpy(&t,&data[(PAGE_CONTENT_SIZE-1)*4],sizeof(int));
+	for(int i=PAGE_CONTENT_SIZE-1;i>index;i--) {
+		memcpy(&data[i*4],&data[(i-1)*4],sizeof(int));
+		memcpy(&r,&data[i*4],sizeof(int));
+		if(r==Min_Int) flag = true;
+	}
+	memcpy(&data[index*4],&value,sizeof(int));
+	if(flag==true) return Min_Int;
+	else return t;
 }
