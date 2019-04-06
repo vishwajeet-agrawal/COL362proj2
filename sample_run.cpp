@@ -100,43 +100,76 @@ void createInput(FileManager& fm, char* filename){
 	fm.CloseFile(fh);
 }
 
-char ValueExistsInPage (PageHandler& ph,int value) {
+struct BSResult{
+	BSResult(){};
+	BSResult(char type,int pgn, int pos):type(type),result(make_pair(pgn,pos)){};
+	char type; //L for seek left R for seek right F for finished E for empty
+	pair<int,int> result;
+};
+
+char ValueExistsInPage (PageHandler& ph,int value, int typeBS) {
 	char * data = ph.GetData();
 	int lo_val; 
 	memcpy(&lo_val, &data[0], sizeof(int));
 	int hi_val;
 	memcpy(&hi_val, &data[PAGE_CONTENT_SIZE-4], sizeof(int));
-	if(value>=lo_val && value<=hi_val) return true;
-	return false;
+	if(typeBS == LowerBoundBS) {
+		if(value>hi_val) return 'R';                                  // R means search right and here
+		else if(value>lo_val && value<=hi_val) return 'H';			  // Lower Bound exists here														
+		else return 'L';                      				           // L means lower bound exist in left or here
+	} else {
+		if(value<lo_val) return 'L'; 								  // L means upper bound may exist in left   
+		else if(value>=lo_val && value<hi_val) return 'H';            // B means upper bound left and upper bound right
+		else return 'R';                                 			  // R meens upper bound exists right or here
+	}    
+	return 'O';                   
 }
 
-pair<int,int> BoundBinarySearch (PageHandler& ph, int t, int typeBS) {
+BSResult BoundBinarySearch (PageHandler& ph, int t, int typeBS) {
 	char*data = ph.GetData();
+	int pg = ph.GetPageNum();
 	int lo = 0;
 	int hi = (PAGE_CONTENT_SIZE-4)/4;
-	int mid = (lo+hi)/2;
-	int mid_value;
-	while (lo<=hi) {
-		memcpy(&mid_value, &data[mid*4], sizeof(int));
-		if(lo==hi) {
-			if(mid_value==t) return make_pair(ph.GetPageNum(),mid);
-			else return make_pair(-1,0);
+	char res = ValueExistsInPage(ph,t,typeBS);
 
-
-		}
-		if (mid_value<t) lo=mid+1;
-		if (mid_value>t) hi=mid-1;
-		if (mid_value==t) {
-			if(typeBS == LowerBoundBS) {
-				hi = mid;
-				mid = (lo+hi)/2;
-			} else {
-				lo = mid;
-				mid = (lo+hi+1)/2;
+	if(typeBS == LowerBoundBS) {
+		switch(res) {
+			case 'R': return BSResult('R',pg,hi+1); 
+			case 'L': return BSResult('L',pg,lo+1);
+			case 'H': {
+				int mid = (lo+hi)/2;
+				int mid_value;
+				while (lo<=hi) {
+					memcpy(&mid_value, &data[mid*4], sizeof(int));
+					if(lo==hi) {
+						if(mid_value<t) return BSResult('F',pg,lo+1);
+					}
+					if (mid_value<t) lo=mid;
+					else hi=mid-1;
+					mid = (lo+hi+1)/2;
+				}
 			}
-		}					
+		}
+	} else {
+		switch(res) {
+			case 'R': return BSResult ('R',pg,hi+1);
+			case 'L': return BSResult ('L',pg,lo+1);
+			case 'H': {
+				int mid = (lo+hi)/2;
+				int mid_value;
+				while (lo<=hi) {
+					memcpy(&mid_value, &data[mid*4], sizeof(int));
+					if(lo==hi) {
+						if(mid_value<t) return BSResult('F',pg,lo+1);
+					}
+					if (mid_value>t) hi=mid;
+					else lo=mid+1;
+					mid = (lo+hi)/2;
+			}
+		}
 	}
 }
+
 pair<pair<int,int>,pair<int,int>> megabinarySearch(FileHandler& fh, int t){
 	try{
 		PageHandler *pha = new PageHandler[BUFFER_SIZE];
@@ -183,9 +216,3 @@ BSResult binarySearch (PageHandler& ph,int t){
 
 	//  head of vector is -1 for not found 0 for left 1 for middle 2 for right 
 }
-struct BSResult{
-	BSResult(){};
-	BSResult(char type,int pgn, int pos):type(type),result(make_pair(pgn,pos)){};
-	char type; //L for seek left R for seek right F for finished E for empty
-	pair<int,int> result;
-};
