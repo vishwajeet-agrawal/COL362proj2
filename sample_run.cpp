@@ -15,6 +15,7 @@
 using namespace std;
 void printPage(FileHandler* fh);
 void createInput(FileManager& fm, char* filename);
+
 struct BSResult{
 	BSResult(char type='E',int pgn=0, int pos=0):type(type),result(make_pair(pgn,pos)){};
 	char type; //L for seek left R for seek right F for finished E for empty
@@ -27,6 +28,7 @@ struct MBSResult{
 };
 BSResult BoundBinarySearch(PageHandler& ph,int t,char type);
 MBSResult megaBinarySearch(FileHandler& fh, int t);
+BSResult SearchLastPage (PageHandler& ph, int t,char type);
 pair<int,int> boundMegaBinarySearch(FileHandler& fh,int t, char type);
 
 int main() {
@@ -91,7 +93,7 @@ int main() {
 	// printPage(&fh);
 	ph = fh.FirstPage();
 	
-	BSResult bsr = BoundBinarySearch(ph,4090,'L');
+	BSResult bsr = SearchLastPage(ph,4090,'L');
 	cout<<bsr.type<<endl;
 	cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
 	printPage(&fh);
@@ -120,6 +122,7 @@ void createInput(FileManager& fm, char* filename){
 		char* data = ph.GetData();
 		for(int i=0,num;i<PAGE_CONTENT_SIZE;i+=4){
 			num = i+1;
+			if (i==60){num=-2147483648;}
 			memcpy(&data[i],&num,sizeof(int));
 		}
 		// fh.FlushPage(ph.GetPageNum());
@@ -127,15 +130,6 @@ void createInput(FileManager& fm, char* filename){
 	fm.CloseFile(fh);
 }
 
-// char ValueExistsInPage (PageHandler& ph,int value) {
-// 	char * data = ph.GetData();
-// 	int lo_val; 
-// 	memcpy(&lo_val, &data[0], sizeof(int));
-// 	int hi_val;
-// 	memcpy(&hi_val, &data[PAGE_CONTENT_SIZE-4], sizeof(int));
-// 	if(value>=lo_val && value<=hi_val) return true;
-// 	return false;
-// }
 BSResult lastPageSearch (PageHandler& ph,int t,char typeS){
 
 }
@@ -347,3 +341,35 @@ BSResult BoundBinarySearch(PageHandler& ph,int t,char type){
 	}
 }
 
+BSResult SearchLastPage (PageHandler& ph, int t,char type) {
+	char*data = ph.GetData();
+	int pg = ph.GetPageNum();
+	int value;
+	if(type = 'L') {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
+			memcpy(&value, &data[i*4], sizeof(int));
+			if(value==-2147483648) {
+				if(i==0) return BSResult('L',pg,i+1);
+				else return BSResult('F',pg,i);
+			}
+			if(t<=value) {
+				if(i==0) return BSResult('L',pg,1);
+				return BSResult('F',pg,i);
+
+			}
+		}
+		return BSResult('F',pg,PAGE_CONTENT_SIZE/4+1);
+	} else {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
+			memcpy(&value, &data[i*4], sizeof(int));
+			if(value==-2147483648) {
+				if(i==0) return BSResult('L',pg,i+1);
+				else return BSResult('F',pg,i+1);
+			} 
+			if(t<value) {
+				if(i==0) return BSResult('L',pg,1);
+				else return BSResult('F',pg,i+1);	
+			}
+		}		
+	}
+}
