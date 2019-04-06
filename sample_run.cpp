@@ -93,7 +93,7 @@ int main() {
 	// printPage(&fh);
 	ph = fh.FirstPage();
 	
-	BSResult bsr = SearchLastPage(ph,4090,'L');
+	BSResult bsr = BoundBinarySearch(ph,17,'U');
 	cout<<bsr.type<<endl;
 	cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
 	printPage(&fh);
@@ -109,7 +109,7 @@ void printPage(FileHandler* fh){
 	PageHandler ph = fh->FirstPage();
 	char* data = ph.GetData();
 	int num;
-	for(int i=4000;i<PAGE_CONTENT_SIZE;i=i+4){
+	for(int i=0;i<PAGE_CONTENT_SIZE/50;i=i+4){
 		memcpy(&num,&data[i],sizeof(int));
 		if (num==-2147483648) break;
 		cout<<num<<endl;
@@ -122,16 +122,12 @@ void createInput(FileManager& fm, char* filename){
 		char* data = ph.GetData();
 		for(int i=0,num;i<PAGE_CONTENT_SIZE;i+=4){
 			num = i+1;
-			if (i==60){num=-2147483648;}
+			// if (i==60){num=-2147483648;}
 			memcpy(&data[i],&num,sizeof(int));
 		}
 		// fh.FlushPage(ph.GetPageNum());
 	}
 	fm.CloseFile(fh);
-}
-
-BSResult lastPageSearch (PageHandler& ph,int t,char typeS){
-
 }
 
 pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
@@ -299,45 +295,90 @@ BSResult BoundBinarySearch(PageHandler& ph,int t,char type){
 	int hi = PAGE_CONTENT_SIZE-4;
 	int num;
 	int mid;
-	memcpy(&num,&data[0],sizeof(int));
+	
 	int bound;
-	if (num<t){
-		bound = 1;
-		memcpy(&num,&data[hi],sizeof(int));
+	if (type=='L'){
+		memcpy(&num,&data[0],sizeof(int));
 		if (num<t){
+			bound = 1;
+			memcpy(&num,&data[hi],sizeof(int));
+			if (num<t){
+				bsr.type='R';
+				bsr.result = make_pair(ph.GetPageNum(),PAGE_CONTENT_SIZE/4+1);
+				return bsr;
+			}
+			else {
+				lo+=4;
+				hi-=4;
+				while(true){
+					if(hi<lo){
+						break;
+					}
+					mid = ((hi/4+lo/4)/2)*4;
+					memcpy(&num,&data[mid],sizeof(int));
+					if (num<t){
+						bound = mid/4+1;
+						lo = mid+4;
+						continue;
+					}
+					else{
+						hi = mid-4;
+						continue;
+					}
+
+				}
+				bsr.type='F';
+				bsr.result = make_pair(ph.GetPageNum(),bound);
+				return bsr;
+			}	
+		}
+		else {
+			bsr.type='L';
+			bsr.result = make_pair(ph.GetPageNum(),0);
+			return bsr;
+		}
+	}
+	else {
+		memcpy(&num,&data[hi],sizeof(int));
+		if (num>t){
+		
+			bound = hi/4+1;
+			memcpy(&num,&data[lo],sizeof(int));
+			if (num>t){
+				bsr.type='L';
+				bsr.result = make_pair(ph.GetPageNum(),0);
+				return bsr;
+			}
+			else {
+				lo+=4;
+				hi-=4;
+				while(true){
+					if(hi<lo){
+						break;
+					}
+					mid = ((hi/4+lo/4)/2)*4;
+					memcpy(&num,&data[mid],sizeof(int));
+					if (num>t){
+						bound = mid/4+1;
+						hi = mid-4;
+						continue;
+					}
+					else{
+						lo = mid+4;
+						continue;
+					}
+
+				}
+				bsr.type='F';
+				bsr.result = make_pair(ph.GetPageNum(),bound);
+				return bsr;
+			}	
+		}
+		else {
 			bsr.type='R';
 			bsr.result = make_pair(ph.GetPageNum(),PAGE_CONTENT_SIZE/4+1);
 			return bsr;
 		}
-		else {
-			lo+=4;
-			hi+=4;
-			while(true){
-				if(hi<lo){
-					break;
-				}
-				mid = ((hi/4+lo/4)/2)*4;
-				memcpy(&num,&data[mid],sizeof(int));
-				if (num<t){
-					bound = mid/4+1;
-					lo = mid+4;
-					continue;
-				}
-				else{
-					hi = mid-4;
-					continue;
-				}
-
-			}
-			bsr.type='F';
-			bsr.result = make_pair(ph.GetPageNum(),bound);
-			return bsr;
-		}	
-	}
-	else {
-		bsr.type='L';
-		bsr.result = make_pair(ph.GetPageNum(),0);
-		return bsr;
 	}
 }
 
@@ -345,7 +386,7 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 	char*data = ph.GetData();
 	int pg = ph.GetPageNum();
 	int value;
-	if(type = 'L') {
+	if(type =='L') {
 		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
 			memcpy(&value, &data[i*4], sizeof(int));
 			if(value==-2147483648) {
@@ -358,7 +399,7 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 
 			}
 		}
-		return BSResult('F',pg,PAGE_CONTENT_SIZE/4+1);
+		return BSResult('F',pg,PAGE_CONTENT_SIZE/4);
 	} else {
 		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
 			memcpy(&value, &data[i*4], sizeof(int));
@@ -371,5 +412,6 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 				else return BSResult('F',pg,i+1);	
 			}
 		}		
+		return BSResult('F',pg,PAGE_CONTENT_SIZE/4+1);
 	}
 }
