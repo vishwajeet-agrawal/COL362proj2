@@ -70,8 +70,11 @@ int main() {
 	
 	fm.CloseFile(fh);
 	fm.DestroyFile("test_input1");
+
+
 	return 0;
 }
+
 
 void printPage(FileHandler* fh){
 	PageHandler ph = fh->FirstPage();
@@ -118,6 +121,8 @@ pair<int,int> BoundBinarySearch (PageHandler& ph, int t, int typeBS) {
 		if(lo==hi) {
 			if(mid_value==t) return make_pair(ph.GetPageNum(),mid);
 			else return make_pair(-1,0);
+
+
 		}
 		if (mid_value<t) lo=mid+1;
 		if (mid_value>t) hi=mid-1;
@@ -132,7 +137,42 @@ pair<int,int> BoundBinarySearch (PageHandler& ph, int t, int typeBS) {
 		}					
 	}
 }
+pair<pair<int,int>,pair<int,int>> megabinarySearch(FileHandler& fh, int t){
+	try{
+		PageHandler *pha = new PageHandler[BUFFER_SIZE];
+		int no_pages=0;
+		int page_no = -1;
+		BSResult bsr,bsr1;
+		while(true){
+			try{
+				pha[no_pages]=(fh.NextPage(page_no));
+				page_no = pha[no_pages].GetPageNum();
+				no_pages++;
+			}
+			catch(...){
+				int hi = no_pages-1;
+				int lo = 0;
+				while(true){
+					int mid = (hi+lo)/2;
+					bsr1 = binarySearch(pha[mid],t);
+					if (bsr1.type=='L'){
+						
+					}
+					else if(bsr1.type=='R'){
 
+					}
+					else{
+						break;
+					}
+				}
+			}
+			no_pages=0;
+		}
+	}
+	catch(...){
+		
+	}
+}
 BSResult binarySearch (PageHandler& ph,int t){
 	pair<int,int> lb;
 	
@@ -144,10 +184,8 @@ BSResult binarySearch (PageHandler& ph,int t){
 	//  head of vector is -1 for not found 0 for left 1 for middle 2 for right 
 }
 struct BSResult{
-	BSResult () {}
-	BSResult(char x) {
-		type = x;
-	}
-	char type; //L for seek left R for seek right F for finished E for empty l for immediate left, r for immediate right
-	list<pair<int,int>> result;
+	BSResult(){};
+	BSResult(char type,int pgn, int pos):type(type),result(make_pair(pgn,pos)){};
+	char type; //L for seek left R for seek right F for finished E for empty
+	pair<int,int> result;
 };
