@@ -368,14 +368,22 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 	}
 }
 
+void PageCopy (PageHandler &source,PageHandler &target) {
+	char* source_data = source.GetData();
+	char* target_data = target.GetData();
+	for(int i=0;i<PAGE_CONTENT_SIZE;i+=4) {
+		memcpy(&target_data[i],&source_data[i],sizeof(int));
+	}
+}
+
 int ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
 	char *data = ph.GetData();
 	int t,r;
 	bool flag = false;
-	memcpy(&t,&data[(PAGE_CONTENT_SIZE-1)*4],sizeof(int));
-	for(int i=PAGE_CONTENT_SIZE-1;i>index;i--) {
-		memcpy(&data[i*4],&data[(i-1)*4],sizeof(int));
-		memcpy(&r,&data[i*4],sizeof(int));
+	memcpy(&t,&data[PAGE_CONTENT_SIZE-4],sizeof(int));
+	for(int i=PAGE_CONTENT_SIZE-4;i>index;i-=4) {
+		memcpy(&data[i],&data[i-4],sizeof(int));
+		memcpy(&r,&data[i],sizeof(int));
 		if(r==Min_Int) flag = true;
 	}
 	memcpy(&data[index*4],&value,sizeof(int));
