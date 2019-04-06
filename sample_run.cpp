@@ -8,6 +8,7 @@
 #include <vector>
 #include <math.h>
 #include <list>
+#define INT_MIN -2147483648
 
 #define LowerBoundBS 0
 #define UpperBoundBS -1
@@ -33,83 +34,30 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh,int t, char type);
 
 int main() {
 	FileManager fm;
-	
-	// Create a brand new file
-	FileHandler fh = fm.CreateFile("mid_value.txt");
-	cout << "File created " << endl;
-
-	// Create a new page
-	PageHandler ph = fh.NewPage ();
-	char *data = ph.GetData ();
-
-	// Store an integer at the very first location
-	int num = 5;
-	memcpy (&data[0], &num, sizeof(int));
-
-	// Store an integer at the second location
-	num = 1000;
-	memcpy (&data[4], &num, sizeof(int));
-
-	// Flush the page
-	fh.FlushPages ();
-	cout << "Data written and flushed" << endl;
-
-	// Close the file
-	fm.CloseFile(fh);
-
-	// Reopen the same file, but for reading this time
-	fh = fm.OpenFile ("mid_value.txt");
-	cout << "File opened" << endl;
-
-	// Get the very first page and its data
-	ph = fh.FirstPage ();
-	data = ph.GetData ();
-
-	// Output the first integer
-	memcpy (&num, &data[0], sizeof(int));
-	cout << "First number: " << num << endl;
-
-	// Output the second integer
-	memcpy (&num, &data[4], sizeof(int));
-	cout << "Second number: " << num << endl;;
-
-	// Close the file and destory it
-	fm.CloseFile (fh);
-	fm.DestroyFile ("mid_value.txt");
-	// fh = fm.OpenFile("sort_output1.txt");
-	// printPage(&fh);
-	// cout<<fh.LastPage().GetPageNum();
-	// ph=fh.LastPage();
-	// fm.CloseFile(fh);
 	createInput(fm,"test_input1");
-	fh = fm.OpenFile("test_input1");
-	// for(int i=0;i<60;i++){
-	// 	PageHandler ph = fh.FirstPage();
-	// 	cout<<&ph<<endl;
-	// }
-	// cout<<&ph<<endl;
-	// cout<<fh.UnpinPage(fh.FirstPage().GetPageNum())<<endl;
-	// cout<<fh.UnpinPage(fh.FirstPage().GetPageNum())<<endl;
-	// printPage(&fh);
-	ph = fh.FirstPage();
-	
-	BSResult bsr = BoundBinarySearch(ph,17,'U');
-	cout<<bsr.type<<endl;
-	cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
+	FileHandler fh = fm.OpenFile("insert_testcase1.txt");
+	PageHandler ph = fh.FirstPage();
+	MBSResult bsr = megaBinarySearch(fh,2083069270);
+	cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
+	cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
+	// cout<<bsr.type<<endl;
+	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
 	printPage(&fh);
+	FileHandler fh1 = fm.OpenFile("insert_output1.txt");
+	printPage(&fh1);
+	MBSResult mbsr = megaBinarySearch(fh,10000);
+	cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
+	cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
 	fm.CloseFile(fh);
 	fm.DestroyFile("test_input1");
-	
-
 	return 0;
 }
-
 
 void printPage(FileHandler* fh){
 	PageHandler ph = fh->FirstPage();
 	char* data = ph.GetData();
 	int num;
-	for(int i=0;i<PAGE_CONTENT_SIZE/50;i=i+4){
+	for(int i=0;i<PAGE_CONTENT_SIZE/5;i=i+4){
 		memcpy(&num,&data[i],sizeof(int));
 		if (num==-2147483648) break;
 		cout<<num<<endl;
@@ -121,7 +69,7 @@ void createInput(FileManager& fm, char* filename){
 		PageHandler ph = fh.NewPage();
 		char* data = ph.GetData();
 		for(int i=0,num;i<PAGE_CONTENT_SIZE;i+=4){
-			num = i+1;
+			num = i+1+j*PAGE_CONTENT_SIZE;
 			// if (i==60){num=-2147483648;}
 			memcpy(&data[i],&num,sizeof(int));
 		}
@@ -141,7 +89,7 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 	//check if first page = last page
 	if (first_pgn==last_pgn){
 		fh.UnpinPage(last_pgn);
-		BSResult bsr = BoundBinarySearch(pgi,t,LU);
+		BSResult bsr = SearchLastPage(pgi,t,LU);
 		if (bsr.type=='L'){
 			return make_pair(last_pgn,0);
 		}
@@ -165,7 +113,7 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 	}
 	else if(bsref.type=='R'){
 		//checking the last page
-		BSResult bsr1 = lastPageSearch(pgf,t,LU);
+		BSResult bsr1 = SearchLastPage(pgf,t,LU);
 		fh.UnpinPage(pgf.GetPageNum());
 		bsref = bsr1;
 		if (bsref.type=='F'){
@@ -285,7 +233,9 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 MBSResult megaBinarySearch(FileHandler& fh,int t){
 	MBSResult mbsr;
 	mbsr.lower_bound = boundMegaBinarySearch(fh,t,'L');
+	mbsr.lower_bound.first++;
 	mbsr.upper_bound = boundMegaBinarySearch(fh,t,'U');
+	mbsr.upper_bound.first++;
 	return mbsr;
 }
 BSResult BoundBinarySearch(PageHandler& ph,int t,char type){
@@ -415,3 +365,41 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 		return BSResult('F',pg,PAGE_CONTENT_SIZE/4+1);
 	}
 }
+
+void insertion(FileHandler& fh, int t){
+	pair<int,int> mbsr = boundMegaBinarySearch(fh,t,'U');
+	int pg = mbsr.first;
+	int pos = mbsr.second;
+	PageHandler ph = fh.LastPage();
+	int last_pgn = ph.GetPageNum();
+	fh.UnpinPage(last_pgn);
+	if (last_pgn<pg){
+		PageHandler ph1 = fh.NewPage();
+		ShiftPage(ph1,pos-1,t);
+		fh.DisposePage(ph1.GetPageNum());
+	}
+	else{
+		PageHandler ph1 = fh.PageAt(pg);
+		int val = ShiftPage(ph1,pos-1,t);
+		fh.DisposePage(pg++);
+		if (val == INT_MIN){
+			fh.FlushPage(pg-1);
+			return;
+		}
+		while(true){
+			if (pg>last_pgn){
+				break;
+			}
+			ph1 = fh.PageAt(pg);
+			val = ShiftPage(ph1,0,val);
+			fh.DisposePage(pg++);
+		}
+		if (val!=INT_MIN){
+			ph1 = fh.NewPage();
+			ShiftPage(ph1,0,val);
+			fh.DisposePage(ph1.GetPageNum());
+		}
+		fh.FlushPages();
+	}
+}
+int ShiftPage(PageHandler& ph,int pos,int k){}
