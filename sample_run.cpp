@@ -8,6 +8,9 @@
 #include <vector>
 #include <list>
 
+#define LowerBoundBS 0
+#define UpperBoundBS -1
+
 using namespace std;
 void printPage(FileHandler* fh);
 void createInput(FileManager& fm, char* filename);
@@ -15,7 +18,7 @@ int main() {
 	FileManager fm;
 	
 	// Create a brand new file
-	FileHandler fh = fm.CreateFile("temp.txt");
+	FileHandler fh = fm.CreateFile("mid_value.txt");
 	cout << "File created " << endl;
 
 	// Create a new page
@@ -38,7 +41,7 @@ int main() {
 	fm.CloseFile(fh);
 
 	// Reopen the same file, but for reading this time
-	fh = fm.OpenFile ("temp.txt");
+	fh = fm.OpenFile ("mid_value.txt");
 	cout << "File opened" << endl;
 
 	// Get the very first page and its data
@@ -55,7 +58,7 @@ int main() {
 
 	// Close the file and destory it
 	fm.CloseFile (fh);
-	fm.DestroyFile ("temp.txt");
+	fm.DestroyFile ("mid_value.txt");
 	// fh = fm.OpenFile("sort_output1.txt");
 	// printPage(&fh);
 	// cout<<fh.LastPage().GetPageNum();
@@ -93,28 +96,58 @@ void createInput(FileManager& fm, char* filename){
 	}
 	fm.CloseFile(fh);
 }
-BSResult binarySearch(PageHandler& ph,int t){
-	char* data = ph.GetData();
-	int low = 0;
-	int high = PAGE_CONTENT_SIZE;
-	int mid = (low+high)/2;
-	int _temp_num;
-	while(mid%4==0){
-		memcpy(&_temp_num,&data[mid],sizeof(int));
-		if (_temp_num<t){
-			low=_temp_num+4;
+
+char ValueExistsInPage (PageHandler& ph,int value) {
+	char * data = ph.GetData();
+	int lo_val; 
+	memcpy(&lo_val, &data[0], sizeof(int));
+	int hi_val;
+	memcpy(&hi_val, &data[PAGE_CONTENT_SIZE-4], sizeof(int));
+	if(value>=lo_val && value<=hi_val) return true;
+	return false;
+}
+
+pair<int,int> BoundBinarySearch (PageHandler& ph, int t, int typeBS) {
+	char*data = ph.GetData();
+	int lo = 0;
+	int hi = (PAGE_CONTENT_SIZE-4)/4;
+	int mid = (lo+hi)/2;
+	int mid_value;
+	while (lo<=hi) {
+		memcpy(&mid_value, &data[mid*4], sizeof(int));
+		if(lo==hi) {
+			if(mid_value==t) return make_pair(ph.GetPageNum(),mid);
+			else return make_pair(-1,0);
 		}
-		else if (_temp_num>t){
-			high=_temp_num-4;
-		}
-		else{
-			
-		}
-		mid = (low+high)/2;
+		if (mid_value<t) lo=mid+1;
+		if (mid_value>t) hi=mid-1;
+		if (mid_value==t) {
+			if(typeBS == LowerBoundBS) {
+				hi = mid;
+				mid = (lo+hi)/2;
+			} else {
+				lo = mid;
+				mid = (lo+hi+1)/2;
+			}
+		}					
 	}
+}
+
+BSResult binarySearch (PageHandler& ph,int t){
+	pair<int,int> lb;
+	
+	lb = BoundBinarySearch(ph,t,LowerBoundBS);
+	
+	
+
+
 	//  head of vector is -1 for not found 0 for left 1 for middle 2 for right 
 }
 struct BSResult{
+	BSResult () {}
+	BSResult(char x) {
+		type = x;
+	}
 	char type; //L for seek left R for seek right F for finished E for empty l for immediate left, r for immediate right
 	list<pair<int,int>> result;
 };
