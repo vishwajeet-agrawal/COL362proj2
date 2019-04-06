@@ -54,7 +54,7 @@ int main() {
 
 	// Output the second integer
 	memcpy (&num, &data[4], sizeof(int));
-	cout << "Second number: " << num << endl;;
+	cout << "Second number: " << num << endl;
 
 	// Close the file and destory it
 	fm.CloseFile (fh);
@@ -67,7 +67,6 @@ int main() {
 	createInput(fm,"test_input1");
 	fh = fm.OpenFile("test_input1");
 	printPage(&fh);
-	
 	fm.CloseFile(fh);
 	fm.DestroyFile("test_input1");
 
@@ -88,11 +87,12 @@ void printPage(FileHandler* fh){
 }
 void createInput(FileManager& fm, char* filename){
 	FileHandler fh = fm.CreateFile(filename);
+	int j = 0;
 	for(int j=0;j<BUFFER_SIZE;j++){
 		PageHandler ph = fh.NewPage();
 		char* data = ph.GetData();
 		for(int i=0,num;i<PAGE_CONTENT_SIZE;i+=4){
-			num = rand();
+			num = j++;
 			memcpy(&data[i],&num,sizeof(int));
 		}
 		// fh.FlushPage(ph.GetPageNum());
@@ -106,6 +106,17 @@ struct BSResult{
 	char type; //L for seek left R for seek right F for finished E for empty
 	pair<int,int> result;
 };
+
+int eofIndex (PageHandler& ph) {
+	int temp;
+	char *data = ph.GetData();
+	int limit = PAGE_CONTENT_SIZE;
+	for(int i=0;i<PAGE_CONTENT_SIZE;i+=4) {
+		memcpy(&temp,&data[i],sizeof(int));
+		if(temp==-2147483648) return i;
+	}
+	return PAGE_CONTENT_SIZE;
+}
 
 char ValueExistsInPage (PageHandler& ph,int value, int typeBS) {
 	char * data = ph.GetData();
@@ -170,49 +181,34 @@ BSResult BoundBinarySearch (PageHandler& ph, int t, int typeBS) {
 	}
 }
 
-pair<pair<int,int>,pair<int,int>> megabinarySearch(FileHandler& fh, int t){
-	try{
-		PageHandler *pha = new PageHandler[BUFFER_SIZE];
-		int no_pages=0;
-		int page_no = -1;
-		BSResult bsr,bsr1;
-		while(true){
-			try{
-				pha[no_pages]=(fh.NextPage(page_no));
-				page_no = pha[no_pages].GetPageNum();
-				no_pages++;
+BSResult BoundBinarySearchLastPage (PageHandler& ph, int t, int typeBS) {
+	char*data = ph.GetData();
+	int pg = ph.GetPageNum();
+	int value;
+	if(typeBS == LowerBoundBS) {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
+			memcpy(&value, &data[i*4], sizeof(int));
+			if(value==-2147483648) {
+				if(i==0) return BSResult('L',pg,i+1);
+				else return BSResult('H',pg,i);
 			}
-			catch(...){
-				int hi = no_pages-1;
-				int lo = 0;
-				while(true){
-					int mid = (hi+lo)/2;
-					bsr1 = binarySearch(pha[mid],t);
-					if (bsr1.type=='L'){
-						
-					}
-					else if(bsr1.type=='R'){
-
-					}
-					else{
-						break;
-					}
-				}
+			if(t<=value) {
+				if(i==0) return BSResult('L',pg,1);
+				return BSResult('H',pg,i);
 			}
-			no_pages=0;
 		}
+		return BSResult('H',pg,PAGE_CONTENT_SIZE/4);
+	} else {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
+			memcpy(&value, &data[i*4], sizeof(int));
+			if(value==-2147483648) {
+				if(i==0) return BSResult('L',pg,i+1);
+				else return BSResult('H',pg,i+1);
+			} 
+			if(t<value) {
+				if(i==0) return BSResult('L',pg,1);
+				else return BSResult('H',pg,i+1);	
+			}
+		}		
 	}
-	catch(...){
-		
-	}
-}
-BSResult binarySearch (PageHandler& ph,int t){
-	pair<int,int> lb;
-	
-	lb = BoundBinarySearch(ph,t,LowerBoundBS);
-	
-	
-
-
-	//  head of vector is -1 for not found 0 for left 1 for middle 2 for right 
 }
