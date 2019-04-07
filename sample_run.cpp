@@ -12,6 +12,7 @@
 
 #define LowerBoundBS 0
 #define UpperBoundBS -1
+#define INT_MIN -2147483648
 
 using namespace std;
 void printPage(FileHandler* fh);
@@ -76,6 +77,7 @@ void createInput(FileManager& fm, char* filename){
 		// fh.FlushPage(ph.GetPageNum());
 	}
 	fm.CloseFile(fh);
+	cout<<"Input created"<<endl;
 }
 
 pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
@@ -402,7 +404,7 @@ void insertion(FileHandler& fhi, int t,FileHandler& fho){
 				fho.FlushPages();
 				return;
 			}
-			else if (val==-1){
+			else {
 				fho.FlushPages();
 				return;
 			}
@@ -414,11 +416,28 @@ void insertion(FileHandler& fhi, int t,FileHandler& fho){
 		fho.DisposePage(pho.GetPageNum());
 	}
 }
-int ShiftPage(PageHandler& phi,PageHandler& pho,int pos,int k){}
+
 
 void MergeSort(FileHandler& fh){
 
 }
-void PageCopy(PageHandler& pho, PageHandler& ph2){
+void PageCopy (PageHandler &source,PageHandler &target) {
+	char* source_data = source.GetData();
+	char* target_data = target.GetData();
+	memcpy(target_data,source_data,PAGE_CONTENT_SIZE);
+}
 
+int ShiftPage (PageHandler &ph,PageHandler& pho, int index, int value) { // indexing starting with 0 // index is upper bound
+	char *data = ph.GetData();
+	int t,r;
+	bool flag = false;
+	memcpy(&t,&data[PAGE_CONTENT_SIZE-4],sizeof(int));
+	for(int i=PAGE_CONTENT_SIZE-4;i>index;i-=4) {
+		memcpy(&data[i],&data[i-4],sizeof(int));
+		memcpy(&r,&data[i],sizeof(int));
+		if(r==INT_MIN) flag = true;
+	}
+	memcpy(&data[index*4],&value,sizeof(int));
+	if(flag==true) return INT_MIN;
+	else return t;
 }
