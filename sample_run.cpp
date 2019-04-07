@@ -10,15 +10,13 @@
 #include <list>
 #define INT_MIN -2147483648
 
-#define LowerBoundBS 0
-#define UpperBoundBS -1
-#define INT_MIN -2147483648
-
 using namespace std;
 void printPage(FileHandler* fh);
 void createInput(FileManager& fm, char* filename);
-void insertion(FileHandler&, int,FileHandler&);
+void Insertion(FileHandler&, int,FileHandler&);
+void Insertion(FileHandler& fh, int t);
 int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value);
+int ShiftPage (PageHandler &ph, int index, int value);
 void PageCopy (PageHandler &source,PageHandler &target);
 struct BSResult{
 	BSResult(char type='E',int pgn=0, int pos=0):type(type),result(make_pair(pgn,pos)){};
@@ -370,7 +368,7 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 	}
 }
 
-void insertion(FileHandler& fhi, int t,FileHandler& fho){
+void Insertion(FileHandler& fhi, int t,FileHandler& fho){
 	pair<int,int> mbsr = boundMegaBinarySearch(fhi,t,'U');
 	int pg = mbsr.first;
 	int pos = mbsr.second;
@@ -444,4 +442,55 @@ int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // inde
 		memcpy(&target_data[i],&source_data[i],sizeof(int));
 	}
 	return t;
+}
+
+int ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
+	char *data = ph.GetData();
+	int t,r;
+	bool flag = false;
+	memcpy(&t,&data[(PAGE_CONTENT_SIZE-1)*4],sizeof(int));
+	for(int i=PAGE_CONTENT_SIZE-1;i>index;i--) {
+		memcpy(&data[i*4],&data[(i-1)*4],sizeof(int));
+		memcpy(&r,&data[i*4],sizeof(int));
+		if(r==INT_MIN) flag = true;
+	}
+	memcpy(&data[index*4],&value,sizeof(int));
+	if(flag==true) return INT_MIN;
+	else return t;
+} 
+void Insertion(FileHandler& fh, int t){
+	pair<int,int> mbsr = boundMegaBinarySearch(fh,t,'U');
+	int pg = mbsr.first;
+	int pos = mbsr.second;
+	PageHandler ph = fh.LastPage();
+	int last_pgn = ph.GetPageNum();
+	fh.UnpinPage(last_pgn);
+	if (last_pgn<pg){
+		PageHandler ph1 = fh.NewPage();
+		ShiftPage(ph1,pos-1,t);
+		fh.DisposePage(ph1.GetPageNum());
+	}
+	else{
+		PageHandler ph1 = fh.PageAt(pg);
+		int val = ShiftPage(ph1,pos-1,t);
+		fh.DisposePage(pg++);
+		if (val == INT_MIN){
+			fh.FlushPage(pg-1);
+			return;
+		}
+		while(true){
+			if (pg>last_pgn){
+				break;
+			}
+			ph1 = fh.PageAt(pg);
+			val = ShiftPage(ph1,0,val);
+			fh.DisposePage(pg++);
+		}
+		if (val!=INT_MIN){
+			ph1 = fh.NewPage();
+			ShiftPage(ph1,0,val);
+			fh.DisposePage(ph1.GetPageNum());
+		}
+		fh.FlushPages();
+	}
 }
