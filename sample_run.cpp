@@ -18,6 +18,8 @@ using namespace std;
 void printPage(FileHandler* fh);
 void createInput(FileManager& fm, char* filename);
 void insertion(FileHandler&, int,FileHandler&);
+int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value);
+void PageCopy (PageHandler &source,PageHandler &target);
 struct BSResult{
 	BSResult(char type='E',int pgn=0, int pos=0):type(type),result(make_pair(pgn,pos)){};
 	char type; //L for seek left R for seek right F for finished E for empty
@@ -427,17 +429,19 @@ void PageCopy (PageHandler &source,PageHandler &target) {
 	memcpy(target_data,source_data,PAGE_CONTENT_SIZE);
 }
 
-int ShiftPage (PageHandler &ph,PageHandler& pho, int index, int value) { // indexing starting with 0 // index is upper bound
-	char *data = ph.GetData();
+int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound
+	char *source_data = ph.GetData();
+	char *target_data = nph.GetData();
 	int t,r;
-	bool flag = false;
-	memcpy(&t,&data[PAGE_CONTENT_SIZE-4],sizeof(int));
-	for(int i=PAGE_CONTENT_SIZE-4;i>index;i-=4) {
-		memcpy(&data[i],&data[i-4],sizeof(int));
-		memcpy(&r,&data[i],sizeof(int));
-		if(r==INT_MIN) flag = true;
+	memcpy(&t,&source_data[PAGE_CONTENT_SIZE-4],sizeof(int));
+	for(int i=PAGE_CONTENT_SIZE-4;i>index*4;i-=4) {
+		memcpy(&target_data[i],&source_data[i-4],sizeof(int));
+		memcpy(&r,&target_data[i],sizeof(int));
+		if(r==INT_MIN) t = -1;
 	}
-	memcpy(&data[index*4],&value,sizeof(int));
-	if(flag==true) return INT_MIN;
-	else return t;
+	memcpy(&target_data[index*4],&value,sizeof(int));
+	for(int i = (index-1)*4;i>=0;i=i-4) {
+		memcpy(&target_data[i],&source_data[i],sizeof(int));
+	}
+	return t;
 }
