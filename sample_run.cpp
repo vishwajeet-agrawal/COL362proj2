@@ -376,19 +376,21 @@ void PageCopy (PageHandler &source,PageHandler &target) {
 	}
 }
 
-int ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
-	char *data = ph.GetData();
+int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound
+	char *source_data = ph.GetData();
+	char *target_data = nph.GetData();
 	int t,r;
-	bool flag = false;
-	memcpy(&t,&data[PAGE_CONTENT_SIZE-4],sizeof(int));
-	for(int i=PAGE_CONTENT_SIZE-4;i>index;i-=4) {
-		memcpy(&data[i],&data[i-4],sizeof(int));
-		memcpy(&r,&data[i],sizeof(int));
-		if(r==Min_Int) flag = true;
+	memcpy(&t,&source_data[PAGE_CONTENT_SIZE-4],sizeof(int));
+	for(int i=PAGE_CONTENT_SIZE-4;i>index*4;i-=4) {
+		memcpy(&target_data[i],&source_data[i-4],sizeof(int));
+		memcpy(&r,&target_data[i],sizeof(int));
+		if(r==Min_Int) t = -1;
 	}
-	memcpy(&data[index*4],&value,sizeof(int));
-	if(flag==true) return Min_Int;
-	else return t;
+	memcpy(&target_data[index*4],&value,sizeof(int));
+	for(int i = (index-1)*4;i>=0;i=i-4) {
+		memcpy(&target_data[i],&source_data[i],sizeof(int));
+	}
+	return t;
 }
 void insertion(FileHandler& fh, int t){
 	pair<int,int> mbsr = boundMegaBinarySearch(fh,t,'U');
@@ -426,3 +428,5 @@ void insertion(FileHandler& fh, int t){
 		fh.FlushPages();
 	}
 }
+
+void 
