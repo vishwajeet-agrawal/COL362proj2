@@ -16,7 +16,7 @@
 using namespace std;
 void printPage(FileHandler* fh);
 void createInput(FileManager& fm, char* filename);
-
+void insertion(FileHandler&, int,FileHandler&);
 struct BSResult{
 	BSResult(char type='E',int pgn=0, int pos=0):type(type),result(make_pair(pgn,pos)){};
 	char type; //L for seek left R for seek right F for finished E for empty
@@ -366,40 +366,59 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 	}
 }
 
-void insertion(FileHandler& fh, int t){
-	pair<int,int> mbsr = boundMegaBinarySearch(fh,t,'U');
+void insertion(FileHandler& fhi, int t,FileHandler& fho){
+	pair<int,int> mbsr = boundMegaBinarySearch(fhi,t,'U');
 	int pg = mbsr.first;
 	int pos = mbsr.second;
-	PageHandler ph = fh.LastPage();
+	PageHandler ph = fhi.LastPage();
 	int last_pgn = ph.GetPageNum();
-	fh.UnpinPage(last_pgn);
-	if (last_pgn<pg){
-		PageHandler ph1 = fh.NewPage();
-		ShiftPage(ph1,pos-1,t);
-		fh.DisposePage(ph1.GetPageNum());
+	PageHandler phi = fhi.FirstPage();
+	PageHandler pho;
+	fhi.UnpinPage(last_pgn);
+	for(int i=0;i<pg;i++){
+		pho = fho.NewPage();
+		PageCopy(phi,pho);
+		fho.DisposePage(pho.GetPageNum());
+		fhi.UnpinPage(phi.GetPageNum());
+		if (i!=last_pgn)
+			phi = fhi.NextPage(i);
 	}
-	else{
-		PageHandler ph1 = fh.PageAt(pg);
-		int val = ShiftPage(ph1,pos-1,t);
-		fh.DisposePage(pg++);
-		if (val == INT_MIN){
-			fh.FlushPage(pg-1);
-			return;
-		}
-		while(true){
-			if (pg>last_pgn){
-				break;
+	pho = fho.NewPage();
+	int val = ShiftPage(phi,pho,pos-1,t);
+	fho.DisposePage(pho.GetPageNum());
+	fhi.UnpinPage(phi.GetPageNum());
+	
+	while(true){
+		if (++pg>last_pgn){
+			if (val == INT_MIN){
+				pho = fho.NewPage();
+
+				char* dat = pho.GetData();
+				int int_min = INT_MIN;
+				memcpy(dat,&int_min,sizeof(int));
+				memset(dat+4,0,PAGE_CONTENT_SIZE-4);
+
+				fho.DisposePage(pho.GetPageNum());
+				fho.FlushPages();
+				return;
 			}
-			ph1 = fh.PageAt(pg);
-			val = ShiftPage(ph1,0,val);
-			fh.DisposePage(pg++);
+			else if (val==-1){
+				fho.FlushPages();
+				return;
+			}
 		}
-		if (val!=INT_MIN){
-			ph1 = fh.NewPage();
-			ShiftPage(ph1,0,val);
-			fh.DisposePage(ph1.GetPageNum());
-		}
-		fh.FlushPages();
+		phi = fhi.PageAt(pg);
+		pho = fho.NewPage();
+		val = ShiftPage(phi,pho,0,val);
+		fhi.UnpinPage(pg);
+		fho.DisposePage(pho.GetPageNum());
 	}
 }
-int ShiftPage(PageHandler& ph,int pos,int k){}
+int ShiftPage(PageHandler& phi,PageHandler& pho,int pos,int k){}
+
+void MergeSort(FileHandler& fh){
+
+}
+void PageCopy(PageHandler& pho, PageHandler& ph2){
+
+}
