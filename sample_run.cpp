@@ -10,10 +10,10 @@
 #include<string>
 #include<algorithm>
 #include <list>
-// #define INT_MIN -2147483648
+#define INT_MIN -2147483648
 
 using namespace std;
-void printPage(FileHandler* fh);
+void printPage(FileHandler& fh);
 void createInput(FileManager& fm, char* filename);
 void Insertion(FileHandler&, int,FileHandler&);
 void Insertion(FileHandler& fh, int t);
@@ -46,17 +46,38 @@ int valueAt(PageHandler ph,int index) {
 	return valueAt(data,index);
 }
 
-// Prints Page 
-void printPage(FileHandler* fh){
-	PageHandler ph = fh->FirstPage();
-	char* data = ph.GetData();
-	int num;
-	for(int i=0;i<PAGE_CONTENT_SIZE/5;i=i+4){
-		memcpy(&num,&data[i],sizeof(int));
-		if (num==-2147483648) break;
-		cout<<num<<endl;
-	}
+int getCountPages (FileHandler& fh) {
+	int lastpg = fh.LastPage().GetPageNum();
+	fh.UnpinPage(lastpg);
+	return lastpg+1;
 }
+
+// Prints Page -- Works
+void printPage(PageHandler& ph) {
+	char* data = ph.GetData();
+	int num,i;
+	for(i=0;i<PAGE_CONTENT_SIZE/4;i++){
+		memcpy(&num,&data[i*4],sizeof(int));
+		if (num==-2147483648) break;
+		cout<<num<<" ";
+	}
+	cout<<"Total Entries: "<<i<<endl;
+}
+
+// Print File -- Works
+void printFile(FileHandler& fh) {
+	int lastpg = getCountPages(fh)-1;
+	PageHandler ph;
+	int pgno=-1;
+	do {
+		cout<<"Print Page:"<<pgno+1<<endl;
+		ph = fh.NextPage(pgno);
+		printPage(ph);
+		pgno = ph.GetPageNum();
+		fh.UnpinPage(pgno);
+	} while(pgno!=lastpg);
+} 
+
 void createInput(FileManager& fm, char* filename){
 	FileHandler fh = fm.CreateFile(filename);
 	for(int j=0;j<BUFFER_SIZE;j++){
@@ -410,7 +431,7 @@ void Insertion(FileHandler& fhi, int t,FileHandler& fho){
 	}
 }
 
-// Copy Page Content
+// Copy Page Content 
 void PageCopy (PageHandler &source,PageHandler &target) {
 	char* source_data = source.GetData();
 	char* target_data = target.GetData();
@@ -418,8 +439,8 @@ void PageCopy (PageHandler &source,PageHandler &target) {
 }
 
 // Get Txt file from number
-string getFilename (int i) {
-	return to_string(i)+".txt";
+string getFilename (int i,int mr) {
+	return to_string(mr)+"_"+to_string(i)+".txt";
 }
 
 // Destroy Txt file from number
@@ -497,36 +518,39 @@ pair<int,int> heapnode (PageHandler& ph,int page_index,int index) {
 	return t;
 }
 
-void NwayMerge (FileManager& fm,int L, int R, const char * merge_run_name) {
+
+// Merge N way [L,R) runs to a single run
+void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr) {
 	// File handlers and pages of input 
+	fm.ClearBuffer();
 	int runs = R-L;
 	FileHandler runfiles[runs];
 	PageHandler page[runs];
 	int run_index[runs];
-	bool last_page_run[runs];
-	for(int i=0;i<runs;i++) run_index[i]=0;
 	for(int i=L;i<R;i++) {
-		string filename = getFilename(i);
+		string filename = getFilename(i,mr);
 		runfiles[i-L] = fm.OpenFile(filename.c_str());
 		page[i-L] = runfiles[i-L].FirstPage();
 	}
 
 	// file handler and page of output
-	int output_eof = 0;
-	FileHandler outputFile = fm.CreateFile(merge_run_name);
+	int output_eof = -1;
+	FileHandler outputFile = fm.CreateFile(merge_output);
 	PageHandler outputPage = outputFile.NewPage();
 	
-	// heap and making a heap
+	// Initializing the heap
 	heap_nway X;
 	int runs_filled = BUFFER_SIZE-1;
 	for(int i=0;i<runs;i++) {
+		run_index[i]=0;
 		char * data = page[i].GetData();
 		int t = valueAt(data,0);
-		if(t==INT_MIN) runs_filled--;
-		else X.insert(make_pair(i,t));
+		if(t!=INT_MIN) X.insert(make_pair(i,t));
 	}
+
+	// Sorting through heap
 	pair<int,int> min_node;
-	while(runs_filled) {
+	while(!X.isEmpty()) {
 		output_eof++;
 		if(output_eof==PAGE_CONTENT_SIZE/4) {
 			outputFile.UnpinPage(outputPage.GetPageNum());
@@ -534,7 +558,7 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_run_name) {
 			output_eof = 0;
 		}
 		min_node = X.pop_min();
-		pushValuetoPage(outputPage,output_eof,min_node.second);   // pushes node second value to the page
+		pushValuetoPage(outputPage,output_eof,min_node.second);   
 
 		// Now take another value from the pages
 		int i = min_node.first;
@@ -542,42 +566,47 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_run_name) {
 		if(run_index[i]==PAGE_CONTENT_SIZE/4) {
 			int pg = page[i].GetPageNum();
 			runfiles[i].UnpinPage(pg);
-			if(last_page_run[i]) runs_filled--;
-			else {
-				page[i] = runfiles[i].NextPage(pg);
+			page[i] = runfiles[i].NextPage(pg);
+			if (page[i].GetPageNum()!=-1) {
 				run_index[i]=0;
-				if(page[i]==runfiles[i].LastPage())
-					last_page_run[i]=true;
-			}
-		}
-		else {
+				int t = valueAt(page[i],run_index[i]);
+				if(t==INT_MIN) {
+					int pg = page[i].GetPageNum();
+					runfiles[i].UnpinPage(pg);
+				} else
+					X.insert(make_pair(i,t));					
+			} 
+		} else {
 			int t = valueAt(page[i],run_index[i]);
-			if(t==INT_MIN) {
-				runs_filled--;
+			if(t!=INT_MIN) {
+				X.insert(make_pair(i,t));
+			} else {
 				int pg = page[i].GetPageNum();
 				runfiles[i].UnpinPage(pg);
 			}
-			else X.insert(make_pair(i,t));
 		}
 	}
-	if(output_eof!=PAGE_CONTENT_SIZE/4) {
-		pushValuetoPage(outputPage,output_eof,INT_MIN);
-	}
 
-	// Closing File with last unpin
+	// put INT_MIN AT THE END OF THE FILE
+	if(output_eof!=PAGE_CONTENT_SIZE/4) {
+		pushValuetoPage(outputPage,output_eof+1,INT_MIN);
+	}
+	// UNPIN, FLUSH AND CLOSE FILE
 	outputFile.UnpinPage(outputPage.GetPageNum());
+	outputFile.FlushPages();
+	// printFile(outputFile);
 	fm.CloseFile(outputFile);
 
 	// Clearing all the remaining files and buffer
 	for(int i=L;i<R;i++) {
-		string filename = getFilename(i);
+		string filename = getFilename(i,mr);
 		fm.CloseFile(runfiles[i-L]);
 		fm.DestroyFile(filename.c_str());
 	}
 	fm.ClearBuffer();
 }
 
-int MergePass (int total_runs, int* max_run_size, FileManager& fm) {
+int MergePass (int total_runs, int* max_run_size, FileManager& fm, int mr) {
 	int total_new_runs = ceil(total_runs/39);
 	*max_run_size = (BUFFER_SIZE-1)*(*max_run_size);
 	int mrs = *max_run_size;
@@ -585,8 +614,8 @@ int MergePass (int total_runs, int* max_run_size, FileManager& fm) {
 	for(int i=1;i<=total_new_runs;i++) {
 		int l = Nway*(i-1);
 		int r = min(Nway*i,total_runs);
-		string file = to_string(i)+".txt";
-		NwayMerge(fm,l,r,file.c_str());   // N-way sort [L,R)
+		string file = to_string(mr)+"_"+to_string(i)+".txt";
+		NwayMerge(fm,l,r,file.c_str(),mr-1);   // N-way sort [L,R)
 	}
 
 	for(int i=total_new_runs+1;i<=total_runs;i++)
@@ -595,27 +624,32 @@ int MergePass (int total_runs, int* max_run_size, FileManager& fm) {
 }
 
 void MakeRunI (int L, int R, FileHandler& ifh, FileHandler& ofh) {
-	int run_size = L-R;
+	cout<<"Making run i"<<endl;
+	int run_size = R-L;
+	heap_nway X;
 	PageHandler pages[run_size];
 	int page_index[run_size];
-	int eof = 0,pages_filled = run_size;
-	PageHandler outputPage = ofh.NewPage();
-	ofh.MarkDirty(outputPage.GetPageNum());
-	heap_nway X;
+	int eof = -1;
+
 	for(int i=L;i<R;i++) {
 		pages[i-L] = ifh.PageAt(i);
+		page_index[i-L] = 1;
 		char * data = pages[i-L].GetData();
 		int t = valueAt(data,0);
-		if(t==INT_MIN) pages_filled--;
-		else X.insert(make_pair(i-L,t));
+		if(t!=INT_MIN) X.insert(make_pair(i-L,t));
 	}
+
+	cout<<"Creating Sorted Run"<<endl;
 	pair<int,int> min_node;
-	while(pages_filled) {
+	PageHandler outputPage = ofh.NewPage();
+
+	X.printheap();
+	while(!X.isEmpty()) {
 		eof++;
 		if(eof==PAGE_CONTENT_SIZE/4) {
 			ofh.UnpinPage(outputPage.GetPageNum());
+			cout<<"New Page output file"<<endl; 
 			outputPage = ofh.NewPage();
-			ofh.MarkDirty(outputPage.GetPageNum());
 			eof = 0;
 		}
 		min_node = X.pop_min();
@@ -626,16 +660,17 @@ void MakeRunI (int L, int R, FileHandler& ifh, FileHandler& ofh) {
 		if(page_index[i]==PAGE_CONTENT_SIZE/4) {
 			int pg = pages[i].GetPageNum();
 			ifh.UnpinPage(pg);
-			pages_filled--;
 		}
 		else {
+			// cout<<"Putting New value from page "<<i<<endl;
 			int t = valueAt(pages[i],page_index[i]);
 			if(t==INT_MIN) {
-				pages_filled--;
 				int pg = pages[i].GetPageNum();
 				ifh.UnpinPage(pg);
+				// cout<<"Page unpinned "<<i<<endl;
+			} else {
+				X.insert(make_pair(i,t));
 			}
-			else X.insert(make_pair(i,t));
 		}
 	}
 	if(eof!=PAGE_CONTENT_SIZE/4) {
@@ -691,33 +726,57 @@ void SortAndCopyFile (FileHandler& output, FileHandler& input) {
 
 // Create Intital Runs as txt file
 int CreateInitialRuns (FileHandler& input_file,FileManager& fm,int total_pages) {
-	FileHandler sortedpage = fm.CreateFile("sortedpage.txt");
-	SortAndCopyFile(sortedpage,input_file);
+	cout<<"Creating Initial Runs"<<endl;
+	FileHandler sortedpage;
+	try {
+		sortedpage = fm.CreateFile("sortedpage.txt");	
+		SortAndCopyFile(sortedpage,input_file);
+		fm.ClearBuffer();
+	} catch (exception e) {
+		sortedpage = fm.OpenFile("sortedpage.txt");
+	}
+	// cout<<"Printing input file"<<endl;
+	// printFile(input_file);
+	// cout<<"Printing sorted page file"<<endl;
+	// printFile(sortedpage);
 	int max_Run_Size = BUFFER_SIZE-1;
-	int total_runs = ceil(total_pages/max_Run_Size);
+	int total_runs = ceil(((float)total_pages)/max_Run_Size);
+	cout<<"Total Initial Runs "<<total_runs<<endl;
 	for(int i=1;i<=total_runs;i++) {
 		int l = max_Run_Size*(i-1);
 		int r = min(max_Run_Size*i,total_pages);
-		FileHandler ofh = fm.CreateFile(getFilename(i).c_str());
-		cout<<"Created Initial Run Name:"<<getFilename(i)<<endl;
+		cout<<"Run "<<i<<", L,R -> "<<l<<","<<r<<endl;
+		FileHandler ofh;
+		try {
+			ofh = fm.CreateFile(getFilename(i,0).c_str());
+		} catch(exception e) {
+			ofh= fm.OpenFile(getFilename(i,0).c_str());
+		}
+		cout<<"Created Initial Run Name:"<<getFilename(i,0)<<endl;
 		MakeRunI(l,r,sortedpage,ofh);   // merge sort [L,R)
+		// printFile(ofh);
 		fm.CloseFile(ofh);
-		cout<<"Closed Run Name:"<<getFilename(i)<<endl;
 		fm.ClearBuffer();
 	}
+	fm.CloseFile(sortedpage);
+	fm.DestroyFile("sortedpage.txt");
 	return total_runs;
 }
 
-FileHandler MergeSort(FileHandler& fh, FileManager& fm){
+void MergeSort(FileHandler& fh, FileManager& fm, const char * mergeFilename){
 	PageHandler ph = fh.LastPage();
 	int total_pages = ph.GetPageNum()+1;
+	cout<<"Total Pages:"<<total_pages<<endl;
 	fh.UnpinPage(total_pages-1);
 	int total_runs = CreateInitialRuns(fh,fm,total_pages);
 	int max_run_size = BUFFER_SIZE-1;
+	int merge_round=0;
 	while(total_runs>BUFFER_SIZE-1) {
-		total_runs = MergePass(total_runs,&max_run_size,fm);
+		merge_round++;
+		total_runs = MergePass(total_runs,&max_run_size,fm,merge_round);
 	}
-	NwayMerge(fm,1,total_runs+1,"merge_sort_output.txt");
+	NwayMerge(fm,1,total_runs+1,mergeFilename,merge_round);
+
 }
 
 int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound
@@ -790,24 +849,33 @@ void Insertion(FileHandler& fh, int t){
 
 int main() {
 	FileManager fm;
-	createInput(fm,"test_input1");
-	FileHandler fh = fm.OpenFile("test_input1");
+	// createInput(fm,"test_input1");
+	// FileHandler fh = fm.OpenFile("test_input1");
 	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
-	PageHandler ph = fh.FirstPage();
+	// PageHandler ph = fh.FirstPage();
 	// MBSResult bsr = megaBinarySearch(fh,2083069270);
 	// cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
 	// cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
 	// cout<<bsr.type<<endl;
 	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
-	// printPage(&fh);
+	// printFile(fh);
 	// FileHandler fh1 = fm.OpenFile("insert_output1.txt");
-	// printPage(&fh1);
+	// printFile(fh1);
 	// MBSResult mbsr = megaBinarySearch(fh,10000);
 	// cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
 	// cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
-	fm.CloseFile(fh);
-	fm.DestroyFile("test_input1");
-	// FileHandler fh_input = fm.OpenFile("sort_input1.txt");
-	// FileHandler fh_output = MergeSort(fh_input,fm);
+	// fm.CloseFile(fh);
+	// fm.DestroyFile("test_input1");
+
+	// MERGE SORT
+	FileHandler fh_input = fm.OpenFile("sort_input2.txt");
+	printFile(fh_input);
+	MergeSort(fh_input,fm,"my_sort_output2.txt");
+	fm.CloseFile(fh_input);
+	FileHandler fh_output = fm.OpenFile("sort_output2.txt");
+	FileHandler fh_my_output = fm.OpenFile("my_sort_output2.txt");
+	printFile(fh_output);
+	printFile(fh_my_output);
+	fm.DestroyFile("my_sort_output2.txt");
 	return 0;
 }
