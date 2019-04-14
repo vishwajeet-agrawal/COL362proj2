@@ -10,7 +10,7 @@
 #include<string>
 #include<algorithm>
 #include <list>
-#define INT_MIN -2147483648
+// #define INT_MIN -2147483648
 
 using namespace std;
 void printPage(FileHandler* fh);
@@ -35,28 +35,6 @@ MBSResult megaBinarySearch(FileHandler& fh, int t);
 BSResult SearchLastPage (PageHandler& ph, int t,char type);
 pair<int,int> boundMegaBinarySearch(FileHandler& fh,int t, char type);
 
-int main() {
-	FileManager fm;
-	createInput(fm,"test_input1");
-	FileHandler fh = fm.OpenFile("insert_testcase1.txt");
-	PageHandler ph = fh.FirstPage();
-	MBSResult bsr = megaBinarySearch(fh,2083069270);
-	cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
-	cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
-	// cout<<bsr.type<<endl;
-	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
-	printPage(&fh);
-	FileHandler fh1 = fm.OpenFile("insert_output1.txt");
-	printPage(&fh1);
-	MBSResult mbsr = megaBinarySearch(fh,10000);
-	cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
-	cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
-	fm.CloseFile(fh);
-	fm.DestroyFile("test_input1");
-	FileHandler fh_input = fm.OpenFile("sort_input1.txt");
-	FileHandler fh_output = MergeSort(fh_input,fm);
-	return 0;
-}
 
 // Get Value from char array or page
 int valueAt(char *data,int index) {
@@ -445,7 +423,7 @@ string getFilename (int i) {
 }
 
 // Destroy Txt file from number
-void DestroyFile (FileManager& fm, int i) {
+void DestroyRun (FileManager& fm, int i) {
 	string filename;
 	filename = to_string(i)+".txt";
 	fm.DestroyFile(filename.c_str());
@@ -612,7 +590,7 @@ int MergePass (int total_runs, int* max_run_size, FileManager& fm) {
 	}
 
 	for(int i=total_new_runs+1;i<=total_runs;i++)
-		DestroyFile(fm,i);
+		DestroyRun(fm,i);
 	return total_new_runs;
 }
 
@@ -688,7 +666,7 @@ void SortAndCopyFile (FileHandler& output, FileHandler& input) {
 	PageHandler ph = input.LastPage();
 	int lastpg = ph.GetPageNum();
 	input.UnpinPage(lastpg);
-	PageHandler ph =  input.FirstPage();
+	ph =  input.FirstPage();
 	while(true) {
 		PageHandler sph = output.NewPage();
 		PageCopy(ph,sph);
@@ -721,7 +699,10 @@ int CreateInitialRuns (FileHandler& input_file,FileManager& fm,int total_pages) 
 		int l = max_Run_Size*(i-1);
 		int r = min(max_Run_Size*i,total_pages);
 		FileHandler ofh = fm.CreateFile(getFilename(i).c_str());
+		cout<<"Created Initial Run Name:"<<getFilename(i)<<endl;
 		MakeRunI(l,r,sortedpage,ofh);   // merge sort [L,R)
+		fm.CloseFile(ofh);
+		cout<<"Closed Run Name:"<<getFilename(i)<<endl;
 		fm.ClearBuffer();
 	}
 	return total_runs;
@@ -805,4 +786,28 @@ void Insertion(FileHandler& fh, int t){
 		}
 		fh.FlushPages();
 	}
+}
+
+int main() {
+	FileManager fm;
+	createInput(fm,"test_input1");
+	FileHandler fh = fm.OpenFile("test_input1");
+	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
+	PageHandler ph = fh.FirstPage();
+	// MBSResult bsr = megaBinarySearch(fh,2083069270);
+	// cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
+	// cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
+	// cout<<bsr.type<<endl;
+	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
+	// printPage(&fh);
+	// FileHandler fh1 = fm.OpenFile("insert_output1.txt");
+	// printPage(&fh1);
+	// MBSResult mbsr = megaBinarySearch(fh,10000);
+	// cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
+	// cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
+	fm.CloseFile(fh);
+	fm.DestroyFile("test_input1");
+	// FileHandler fh_input = fm.OpenFile("sort_input1.txt");
+	// FileHandler fh_output = MergeSort(fh_input,fm);
+	return 0;
 }
