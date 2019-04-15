@@ -9,29 +9,9 @@ typedef pair<int,int> pi;
 
 int main() {
 	FileManager fm;
-<<<<<<< HEAD
 	// insertion_test(fm);
 	
 	// BINARY SEARCH
-	FileHandler fh = fm.OpenFile("insert_testcase1.txt");
-	PageHandler ph = fh.FirstPage();
-	MBSResult bsr = megaBinarySearch(fh,2083069270);
-	cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
-	cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
-	cout<<bsr.type<<endl;
-	cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
-	printFile(fh);
-	FileHandler fh1 = fm.OpenFile("insert_output1.txt");
-	printFile(fh1);
-	MBSResult mbsr = megaBinarySearch(fh,10000);
-	cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
-	cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
-	fm.CloseFile(fh);
-=======
-	insertion_test(fm);
-	fm.ClearBuffer();
-	// createInput(fm,"test_input1.txt",1000,7);
-	// FileHandler fh = fm.OpenFile("test_input1.txt");
 	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
 	// PageHandler ph = fh.FirstPage();
 	// MBSResult bsr = megaBinarySearch(fh,2083069270);
@@ -46,44 +26,25 @@ int main() {
 	// cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
 	// cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
 	// fm.CloseFile(fh);
-	// fm.DestroyFile("test_input1");
->>>>>>> 025dcf16cc01ff0d78215597d840bbd4df876da0
 
 	// MERGE SORT
-	// createInput(fm,"test_input1.txt",2000,7);
-	// FileHandler fh_input = fm.OpenFile("test_input1.txt");
-<<<<<<< HEAD
+	createInput(fm,"test_input1.txt",2000,7);
+	FileHandler fh_input = fm.OpenFile("test_input1.txt");
+	printFile(fh_input);
+	MergeSort("test_input1.txt",fm,"my_sort_output.txt");
 	// printFile(fh_input);
-	// MergeSort("test_input1.txt",fm,"my_sort_output.txt");
-	// // printFile(fh_input);
-	// // fm.CloseFile(fh_input);
-	// // FileHandler fh_output = fm.OpenFile("sort_output2.txt");
-	// // cout<<"Given Output"<<endl;
-	// // printFile(fh_output);
-	// // cout<<"Sorted Page"<<endl;
-	// // FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
-	// // printFile(fh_sorted);
-	// cout<<"My Output"<<endl;
-	// FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
-	// printFile(fh_my_output,true);
-=======
-	// // printFile(fh_input);
-	// MergeSort(fh_input,fm,"my_sort_output.txt");
-	// // printFile(fh_input);
 	// fm.CloseFile(fh_input);
-	// // FileHandler fh_output = fm.OpenFile("sort_output2.txt");
-	
-	// // cout<<"Sorted Page"<<endl;
-	// // FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
-	// // printFile(fh_sorted);
-	// // cout<<"Given Output"<<endl;
-	// // printFile(fh_output);
-	// cout<<"My Output"<<endl;
-	// FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
-	// // printFile(fh_my_output);
->>>>>>> 025dcf16cc01ff0d78215597d840bbd4df876da0
-	// fm.DestroyFile("my_sort_output.txt");
-	// fm.DestroyFile("test_input1.txt");
+	// FileHandler fh_output = fm.OpenFile("sort_output2.txt");
+	// cout<<"Given Output"<<endl;
+	// printFile(fh_output);
+	// cout<<"Sorted Page"<<endl;
+	// FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
+	// printFile(fh_sorted);
+	cout<<"My Output"<<endl;
+	FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
+	printFile(fh_my_output,true);
+	fm.DestroyFile("my_sort_output.txt");
+	fm.DestroyFile("test_input1.txt");
 	return 0;
 }
 void insertion_test(FileManager& fm){
