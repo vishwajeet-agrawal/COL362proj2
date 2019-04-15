@@ -61,7 +61,7 @@ void printPage(PageHandler& ph,bool print,bool& sort) {
 		first = num;
 		if(print) cout<<num<<", ";
 	}
-	cout<<"Total Entries at page:"<<ph.GetPageNum()<<" : "<<i<<endl;
+	// cout<<"Total Entries at page:"<<ph.GetPageNum()<<" : "<<i<<endl;
 }
 // Print File -- Works
 void printFile(FileHandler& fh, bool Complete=false) {
@@ -70,7 +70,7 @@ void printFile(FileHandler& fh, bool Complete=false) {
 	bool sort = true;
 	int pgno=-1;
 	do {
-		cout<<"Print Page:"<<pgno+1<<" ";
+		// cout<<"Print Page:"<<pgno+1<<" ";
 		ph = fh.NextPage(pgno);
 		printPage(ph,Complete,sort);
 		pgno = ph.GetPageNum();
@@ -584,9 +584,9 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 		if(run_index[i]==PAGE_CONTENT_SIZE/4) {
 			int pg = page[i].GetPageNum();
 			runfiles[i].UnpinPage(pg);
-			cout<<"Page request"<<pg<<endl;
-			page[i] = runfiles[i].NextPage(pg);
-			if (page[i].GetPageNum()!=-1) {
+			// cout<<"Page request"<<i<<pg<<endl;
+			try {
+				page[i] = runfiles[i].NextPage(pg);
 				run_index[i]=0;
 				int t = valueAt(page[i],run_index[i]);
 				if(t==INT_MIN) {
@@ -594,7 +594,10 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 					runfiles[i].UnpinPage(pg);
 				} else
 					X.insert(make_pair(i,t));					
-			} 
+			} catch (exception e) {
+				// Dont do anything
+			}
+			
 		} else {
 			int t = valueAt(page[i],run_index[i]);
 			if(t!=INT_MIN) {
@@ -663,7 +666,7 @@ void MakeRunI (int L, int R, FileHandler& ifh, FileHandler& ofh) {
 	pair<int,int> min_node;
 	PageHandler outputPage = ofh.NewPage();
 
-	X.printheap();
+	// X.printheap();
 	while(!X.isEmpty()) {
 		eof++;
 		if(eof==PAGE_CONTENT_SIZE/4) {
@@ -792,7 +795,6 @@ void MergeSort(FileHandler& fh, FileManager& fm, const char * mergeFilename){
 	}
 	cout<<"Final N-way merge"<<endl;
 	NwayMerge(fm,1,total_runs+1,mergeFilename,merge_round);
-
 }
 
 int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound
