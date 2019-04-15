@@ -9,7 +9,7 @@ typedef pair<int,int> pi;
 
 int main() {
 	FileManager fm;
-	insertion_test(fm);
+	// insertion_test(fm);
 	fm.ClearBuffer();
 	// createInput(fm,"test_input1.txt",1000,7);
 	// FileHandler fh = fm.OpenFile("test_input1.txt");
