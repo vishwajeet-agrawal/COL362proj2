@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #define MAX_ARRAY_SIZE 100000
-void InsertArray(int* input, int size, FileHandler& fh);
+void InsertArray(int* input, int size, FileHandler& fh,FileManager& fm);
 pair<int,bool> ShiftPage (PageHandler &ph, int index, int value);
 void Insertion(FileHandler& fh, int t);
 int Insertion(FileHandler& fh, int t, int fv, int fpgn);
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
             fs>>*(input+counter);
             counter++;
         }
-        InsertArray(input,counter,fh);
+        InsertArray(input,counter,fh,fm);
         if(counter==MAX_ARRAY_SIZE){
             counter=0;
         }
@@ -33,10 +33,11 @@ int main(int argc, char* argv[]){
         }
     }
 }
-void InsertArray(int* input, int size, FileHandler& fh){
+void InsertArray(int* input, int size, FileHandler& fh,FileManager& fm){
     sort(input,input+size);
     for(int i=0;i<size;i++){
         Insertion(fh,input[i]);
+        fm.ClearBuffer();
     }
 }
 pair<int,bool> ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
@@ -67,6 +68,7 @@ int Insertion(FileHandler& fh, int t, int fv, int fpgn){
 		PageHandler ph1 = fh.NextPage(pg-1);
 		pair<int,bool> val = ShiftPage(ph1,pos-1,t);
 		fh.MarkDirty(pg++);
+        fh.UnpinPage(pg-1);
 		// fh.UnpinPage(pg++);
 		// fh.UnpinPage(pg++);
 		// fh.FlushPage(0);
@@ -80,12 +82,14 @@ int Insertion(FileHandler& fh, int t, int fv, int fpgn){
 			ph1 = fh.PageAt(pg);
 			val = ShiftPage(ph1,0,val.first);
 			fh.MarkDirty(pg++);
+            fh.UnpinPage(pg-1);
 			// fh.FlushPage(pg-1);
 		}
 		if (val.second==true){
 			ph1 = fh.NewPage();
 			ShiftPage(ph1,0,val.first);
 			fh.MarkDirty(ph1.GetPageNum());
+            fh.UnpinPage(ph1.GetPageNum());
 		}
 		fh.FlushPages();
 }
@@ -101,6 +105,7 @@ void Insertion(FileHandler& fh, int t){
 		PageHandler ph1 = fh.NextPage(pg-1);
 		pair<int,bool> val = ShiftPage(ph1,pos-1,t);
 		fh.MarkDirty(pg++);
+        fh.UnpinPage(pg-1);
 		// fh.UnpinPage(pg++);
 		// fh.UnpinPage(pg++);
 		// fh.FlushPage(0);
@@ -114,12 +119,14 @@ void Insertion(FileHandler& fh, int t){
 			ph1 = fh.PageAt(pg);
 			val = ShiftPage(ph1,0,val.first);
 			fh.MarkDirty(pg++);
+            fh.UnpinPage(pg-1);
 			// fh.FlushPage(pg-1);
 		}
 		if (val.second==true){
 			ph1 = fh.NewPage();
 			ShiftPage(ph1,0,val.first);
 			fh.MarkDirty(ph1.GetPageNum());
+            fh.UnpinPage(ph1.GetPageNum());
 		}
 		fh.FlushPages();
 	
@@ -130,7 +137,7 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 	PageHandler pgf = fh.LastPage();
 	int first_pgn = pgi.GetPageNum();
 	int last_pgn = pgf.GetPageNum();
-	std::cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
+	// std::cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
 	//checking the first page
 
 	//check if first page = last page
@@ -203,8 +210,8 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 				}
 			}
 			catch(...){
-				cout<<"No more space in buffer, initiating binary search in pinned pages"<<endl;
-				cout<<no_pages<<" pages loaded in buffer"<<endl;
+				// cout<<"No more space in buffer, initiating binary search in pinned pages"<<endl;
+				// cout<<no_pages<<" pages loaded in buffer"<<endl;
 				int hi = no_pages-1;
 				int lo = 0;
 				int mid;
@@ -419,7 +426,7 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU,int first_pgn
 
 	int last_pgn = pgf.GetPageNum();
 
-	std::cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
+	// std::cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
 	//checking the first page
 
 	//check if first page = last page
@@ -492,8 +499,8 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU,int first_pgn
 				}
 			}
 			catch(...){
-				cout<<"No more space in buffer, initiating binary search in pinned pages"<<endl;
-				cout<<no_pages<<" pages loaded in buffer"<<endl;
+				// cout<<"No more space in buffer, initiating binary search in pinned pages"<<endl;
+				// cout<<no_pages<<" pages loaded in buffer"<<endl;
 				int hi = no_pages-1;
 				int lo = 0;
 				int mid;
