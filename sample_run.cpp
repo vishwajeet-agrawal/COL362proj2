@@ -7,12 +7,6 @@
 using namespace std;
 typedef pair<int,int> pi;
 
-int main() {
-	FileManager fm;
-	// insertion_test(fm);
-	fm.ClearBuffer();
-	// createInput(fm,"test_input1.txt",1000,7);
-	// FileHandler fh = fm.OpenFile("test_input1.txt");
 	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
 	// PageHandler ph = fh.FirstPage();
 	// MBSResult bsr = megaBinarySearch(fh,2083069270);
@@ -48,8 +42,94 @@ int main() {
 	// // printFile(fh_my_output);
 	// fm.DestroyFile("my_sort_output.txt");
 	// fm.DestroyFile("test_input1.txt");
-	return 0;
+
+int LBindex(PageHandler ph,int x) {
+	char * data = ph.GetData();
+	for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
+		int t = valueAt(data,i);
+		if(t==x) return i+1;
+		if(t>x || t==INT_MIN) return -1;
+	}
+	return -1;
 }
+bool LBComparison (PageHandler ph,int x,bool lastpg) {
+	char * data = ph.GetData();
+	int t = valueAt(data,0);
+	if(x<=t) return true;
+	int s;
+	if(!lastpg){
+		s = valueAt(data,PAGE_CONTENT_SIZE/4-2);
+		if(s>=x) return true;
+		else return false;
+	} else {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
+			int t = valueAt(data,i);
+			if(t>=x) return true;
+			if(t==INT_MIN) break;
+		}
+		return false;
+	}	
+}
+pair<int,int> SearchLB (FileHandler& fh,int x) {
+	int totalPages = getCountPages(fh);
+	int last_pg = totalPages -1;
+	int lo = 0,hi=last_pg;
+	int mid;
+	while(lo<hi) {
+		mid = (lo+hi)/2;
+		PageHandler ph = fh.PageAt(mid);
+		if(LBComparison(ph,x,last_pg==mid)==true) hi = mid;
+		else lo = mid+1;
+	}
+	int res = LBindex(fh.PageAt((lo+hi)/2),x);
+
+	return make_pair(mid+1,res);
+}
+
+int UBindex(PageHandler ph,int x) {
+	char * data = ph.GetData();
+	for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
+		int t = valueAt(data,i);
+		if(t>x) return i;
+	}
+	return -1;
+}
+bool LBComparison (PageHandler ph,int x,bool lastpg) {
+	char * data = ph.GetData();
+	int t = valueAt(data,0);
+	if(x<=t) return true;
+	int s;
+	if(!lastpg){
+		s = valueAt(data,PAGE_CONTENT_SIZE/4-2);
+		if(s>=x) return true;
+		else return false;
+	} else {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
+			int t = valueAt(data,i);
+			if(t>=x) return true;
+			if(t==INT_MIN) break;
+		}
+		return false;
+	}	
+}
+pair<int,int> SearchLB (FileHandler& fh,int x) {
+	int totalPages = getCountPages(fh);
+	int last_pg = totalPages -1;
+	int lo = 0,hi=last_pg;
+	int mid;
+	while(lo<hi) {
+		mid = (lo+hi)/2;
+		PageHandler ph = fh.PageAt(mid);
+		if(LBComparison(ph,x,last_pg==mid)==true) hi = mid;
+		else lo = mid+1;
+	}
+	int res = LBindex(fh.PageAt((lo+hi)/2),x);
+
+	return make_pair(mid+1,res);
+}
+
+
+
 void insertion_test(FileManager& fm){
 
 	// try{
@@ -891,3 +971,18 @@ void Insertion(FileHandler& fh, int t){
 	
 }
 
+
+int main() {
+	FileManager fm;
+	// insertion_test(fm);
+	int y;cin>>y;
+	// createInput(fm,"test_input1.txt",1000,7);
+	FileHandler fh = fm.OpenFile("pqr_sort.txt");
+	pi x = SearchLB(fh,y);
+	if(x.second==-1) {
+		cout<<"-1, -1 "<<x.first<<endl;
+	} else {
+		cout<<x.first<<", "<<x.second<<endl;
+	}
+	return 0;
+}
