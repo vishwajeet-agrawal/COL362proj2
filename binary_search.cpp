@@ -5,7 +5,7 @@ int main(int argc, char* argv[]){
     if (argc<3){return 1;}
     FileManager fm;
     FileHandler fh = fm.OpenFile(argv[1]);
-    int tos = stoi(argv[1]);
+    int tos = stoi(argv[2]);
     MBSResult mbsr = megaBinarySearch(fh,tos);
     int lb_page = mbsr.lower_bound.first;
     int ub_page = mbsr.upper_bound.first;
@@ -16,19 +16,22 @@ int main(int argc, char* argv[]){
     }
     else {
         int start = lb_pos+1;
-        int start_page = lb_page;
+        int start_page = lb_page+1;
         if (start==(PAGE_CONTENT_SIZE-4)/4){
             start =0;
             start_page++;
-            if (start_page==ub_page && ub_pos==start){
+            if (start_page==ub_page+1 && ub_pos==start){
                 cout<<"-1,-1"<<endl;
-                return;
+                
             }
             else{
-                for(int i=start_page;i<ub_page;i++){
+                for(int i=start_page;i<=ub_page;i++){
                     for(int j=start;j<(PAGE_CONTENT_SIZE-4)/4;j++){
-                        cout<<
+                        cout<<i<<","<<j<<endl;
                     }
+                }
+                for(int j=1;j<ub_pos;j++){
+                    cout<<ub_page+1<<","<<j<<endl;
                 }
             }
         }
