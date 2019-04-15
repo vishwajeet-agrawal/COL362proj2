@@ -63,14 +63,9 @@ class heap_nway {
 
 int main() {
 	FileManager fm;
-<<<<<<< HEAD
 	insertion_test(fm);
 	fm.ClearBuffer();
 	// createInput(fm,"test_input1.txt",1000,7);
-=======
-	// insertion_test(fm);
-	createInput(fm,"test_input1.txt",2000,7);
->>>>>>> 1fea2283d89c74c87378ee61c6fa7264e2fd348a
 	// FileHandler fh = fm.OpenFile("test_input1.txt");
 	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
 	// PageHandler ph = fh.FirstPage();
@@ -90,7 +85,6 @@ int main() {
 
 	// MERGE SORT
 	// FileHandler fh_input = fm.OpenFile("test_input1.txt");
-<<<<<<< HEAD
 	// // printFile(fh_input);
 	// MergeSort(fh_input,fm,"my_sort_output.txt");
 	// // printFile(fh_input);
@@ -107,23 +101,6 @@ int main() {
 	// // printFile(fh_my_output);
 	// fm.DestroyFile("my_sort_output.txt");
 	// fm.DestroyFile("test_input1.txt");
-=======
-	// printFile(fh_input);
-	MergeSort("test_input1.txt",fm,"my_sort_output.txt");
-	// printFile(fh_input);
-	// fm.CloseFile(fh_input);
-	// FileHandler fh_output = fm.OpenFile("sort_output2.txt");
-	// cout<<"Given Output"<<endl;
-	// printFile(fh_output);
-	// cout<<"Sorted Page"<<endl;
-	// FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
-	// printFile(fh_sorted);
-	cout<<"My Output"<<endl;
-	FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
-	printFile(fh_my_output,true);
-	fm.DestroyFile("my_sort_output.txt");
-	fm.DestroyFile("test_input1.txt");
->>>>>>> 1fea2283d89c74c87378ee61c6fa7264e2fd348a
 	return 0;
 }
 void insertion_test(FileManager& fm){
@@ -889,14 +866,9 @@ void MergeSort(const char * inputfilename, FileManager& fm, const char * mergeFi
 		cout<<"Merge Pass "<<merge_round<<endl;
 		total_runs = MergePass(total_runs,&max_run_size,fm,merge_round);
 	}
-<<<<<<< HEAD
-	std::cout<<"Final N-way merge"<<endl;
-	NwayMerge(fm,1,total_runs+1,mergeFilename,merge_round);
-=======
 	cout<<"Final N-way merge"<<endl;
 	NwayMerge(fm,0,total_runs,mergeFilename,merge_round);
 	fm.CloseFile(fh);
->>>>>>> 1fea2283d89c74c87378ee61c6fa7264e2fd348a
 }
 
 // pair<int,bool> ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound
