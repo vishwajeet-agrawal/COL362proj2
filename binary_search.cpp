@@ -26,25 +26,29 @@ int main(int argc, char* argv[]){
                 cout<<"-1,-1"<<endl;
                 
             }
+            else if (start_page==ub_page){
+                for(int j=start;j<ub_pos;j++){
+                        cout<<start_page<<","<<j<<endl;
+                    }
+            }
             else{
                 // cout<<start_page<<" "<<ub_page<<endl;
-                for(int i=start_page;i<ub_page;i++){
+                
+                for(int j=start;j<(PAGE_CONTENT_SIZE)/4;j++){
+                        cout<<start_page<<","<<j<<endl;
+                    }
+                for(int i=start_page+1;i<ub_page;i++){
                     // cout<<start<<endl;
-                    for(int j=start;j<(PAGE_CONTENT_SIZE)/4;j++){
+                    for(int j=1;j<(PAGE_CONTENT_SIZE)/4;j++){
                         cout<<i<<","<<j<<endl;
                     }
                 }
-                if (start_page==ub_page){
-                    for(int j=start;j<ub_pos;j++){
-                        cout<<ub_page<<","<<j<<endl;
-                    }
-                    
+                
+                for(int j=1;j<ub_pos;j++){
+                    cout<<ub_page<<","<<j<<endl;
                 }
-                else{
-                    for(int j=1;j<ub_pos;j++){
-                        cout<<ub_page<<","<<j<<endl;
-                    }
-                }
+            
+                
             }
         }
     
@@ -109,7 +113,7 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 			if (bsref.type=='L')
 				return make_pair(bsref.result.first,0);
 			else if (bsref.type=='R')
-				return make_pair(bsref.result.first+1,0);
+				return make_pair(bsref.result.first,PAGE_CONTENT_SIZE/4);
 		}
 		else{
 			no_pages=0;
@@ -118,7 +122,7 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 			try{
 				//loading pages into buffer
 				while(true){
-					if (no_pages==BUFFER_SIZE || no_pages>hi_pg){
+					if (no_pages==BUFFER_SIZE || page_no>hi_pg){
 						throw exception();
 					}
 					pha[no_pages]=(fh.PageAt(page_no));
@@ -148,7 +152,7 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 				}
 				else if(bsref.type=='R'){
 					if (hi==lo){
-						ans= make_pair(bsref.result.first+1,0);
+						ans= bsref.result;
 					}
 					//cheking in last page in buffer
 					BSResult bsr1 = BoundBinarySearch(pha[hi],t,LU);
@@ -297,7 +301,7 @@ BSResult BoundBinarySearch(PageHandler& ph,int t,char type){
 		}
 		else {
 			bsr.type='R';
-			bsr.result = make_pair(ph.GetPageNum(),PAGE_CONTENT_SIZE/4-1+1);
+			bsr.result = make_pair(ph.GetPageNum(),PAGE_CONTENT_SIZE/4);
 			return bsr;
 		}
 	}
@@ -320,7 +324,7 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 
 			}
 		}
-		return BSResult('F',pg,PAGE_CONTENT_SIZE/4-1);
+		return BSResult('F',pg,PAGE_CONTENT_SIZE/4);
 	} else {
 		for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
 			memcpy(&value, &data[i*4], sizeof(int));
