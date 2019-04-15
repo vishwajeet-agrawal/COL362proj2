@@ -1,42 +1,115 @@
 //Sample file for students to get their code running
 
-#include<iostream>
-#include "file_manager.h"
-#include "errors.h"
-#include<cstring>
-#include <random>
-#include <vector>
-#include <math.h>
-#include<string>
-#include<algorithm>
-#include <list>
-#define INT_MIN -2147483648
-
+#include "functions.h"
+#include <iostream>
 using namespace std;
-void createInput(FileManager& fm, char* filename);
-void Insertion(FileHandler&, int,FileHandler&);
-void Insertion(FileHandler& fh, int t);
-int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value);
-int ShiftPage (PageHandler &ph, int index, int value);
-void PageCopy (PageHandler &source,PageHandler &target);
-struct BSResult{
-	BSResult(char type='E',int pgn=0, int pos=0):type(type),result(make_pair(pgn,pos)){};
-	char type; //L for seek left R for seek right F for finished E for empty
-	pair<int,int> result;
-	BSResult& operator=(BSResult& bsr1){type = bsr1.type; result = bsr1.result;return *this;}
+class heap_nway {
+    private:
+        pair<int,int> node[65];
+        int next = 0;
+    public:
+    	int total_insert=0;
+        void printheap() {
+            cout<<"Print with Nodes:"<<next<<endl;
+            for(int i=1;i<=next;i++) {
+                cout<<node[i].second<<" ";
+            }
+            cout<<endl;
+        }
+        void bubbleup (int i) {
+            if(i==1) return;
+            if(node[i].second<node[i/2].second) swap(i,i/2);
+            bubbleup(i/2);
+        }
+        void insert(pair<int,int> n) {
+            next++;
+            node[next] = n;
+            total_insert++;
+            bubbleup(next);
+        }
+        void swap(int x,int y) {
+            pair<int,int> t = node[x];
+            node[x] = node[y];
+            node[y] = t;
+        }
+        // deletes the min from the heap
+        pair<int,int> pop_min () {
+            pair<int,int> t = node[1];
+            swap(1,next);
+            next--;
+            bubbledown(1);
+            return t;
+        }
+        bool isEmpty () {
+		    return next==0;
+	    }
+       
+        void bubbledown (int i) {
+            int lc = 2*i;
+            if(next<lc) return;
+            if(next==lc) {
+                if(node[lc].second<node[i].second) swap(lc,i);
+            } else {
+                int lr = 2*i+1;
+                int index = node[lr].second<node[lc].second?lr:lc;
+                swap(index,i);
+                bubbledown(index);
+            }
+        }
 };
-struct MBSResult{
-	pair<int,int> lower_bound; 
-	pair<int,int> upper_bound;
-};
-BSResult BoundBinarySearch(PageHandler& ph,int t,char type);
-MBSResult megaBinarySearch(FileHandler& fh, int t);
-BSResult SearchLastPage (PageHandler& ph, int t,char type);
-pair<int,int> boundMegaBinarySearch(FileHandler& fh,int t, char type);
-void createSortedInput(FileManager& fm,const char* filename,int page,int lastoff);
-void insertion_test(FileManager& fm);
+
+int main() {
+	FileManager fm;
+	insertion_test(fm);
+	createInput(fm,"test_input1.txt",1000,7);
+	// FileHandler fh = fm.OpenFile("test_input1.txt");
+	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
+	// PageHandler ph = fh.FirstPage();
+	// MBSResult bsr = megaBinarySearch(fh,2083069270);
+	// cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
+	// cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
+	// cout<<bsr.type<<endl;
+	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
+	// printFile(fh);
+	// FileHandler fh1 = fm.OpenFile("insert_output1.txt");
+	// printFile(fh1);
+	// MBSResult mbsr = megaBinarySearch(fh,10000);
+	// cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
+	// cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
+	// fm.CloseFile(fh);
+	// fm.DestroyFile("test_input1");
+
+	// MERGE SORT
+	FileHandler fh_input = fm.OpenFile("test_input1.txt");
+	// printFile(fh_input);
+	MergeSort(fh_input,fm,"my_sort_output.txt");
+	// printFile(fh_input);
+	fm.CloseFile(fh_input);
+	// FileHandler fh_output = fm.OpenFile("sort_output2.txt");
+	
+	// cout<<"Sorted Page"<<endl;
+	// FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
+	// printFile(fh_sorted);
+	// cout<<"Given Output"<<endl;
+	// printFile(fh_output);
+	cout<<"My Output"<<endl;
+	FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
+	printFile(fh_my_output);
+	fm.DestroyFile("my_sort_output.txt");
+	fm.DestroyFile("test_input1.txt");
+	return 0;
+}
 void insertion_test(FileManager& fm){
-	createSortedInput(fm,"insertion_input1.txt",20,10);
+
+	try{
+		createSortedInput(fm,"insertion_input1.txt",20,10);
+		FileHandler fh = fm.OpenFile("insertion_input1.txt");
+		printFile(fh,false);
+	}
+	catch(...){
+		fm.DestroyFile("insertion_input1.txt");
+		fm.DestroyFile("insertion_output1.txt");
+	}
 }
 
 // Get Value from char array or page
@@ -68,7 +141,7 @@ void printPage(PageHandler& ph,bool print,bool& sort) {
 	// cout<<"Total Entries at page:"<<ph.GetPageNum()<<" : "<<i<<endl;
 }
 // Print File -- Works
-void printFile(FileHandler& fh, bool Complete=false) {
+void printFile(FileHandler& fh, bool Complete) {
 	int lastpg = getCountPages(fh)-1;
 	PageHandler ph;
 	bool sort = true;
@@ -504,60 +577,6 @@ void pushValuetoPage(PageHandler& oph,int index,int value) {
 }
 
 // Tried and tested
-class heap_nway {
-    private:
-        pair<int,int> node[65];
-        int next = 0;
-    public:
-    	int total_insert=0;
-        void printheap() {
-            cout<<"Print with Nodes:"<<next<<endl;
-            for(int i=1;i<=next;i++) {
-                cout<<node[i].second<<" ";
-            }
-            cout<<endl;
-        }
-        void bubbleup (int i) {
-            if(i==1) return;
-            if(node[i].second<node[i/2].second) swap(i,i/2);
-            bubbleup(i/2);
-        }
-        void insert(pair<int,int> n) {
-            next++;
-            node[next] = n;
-            total_insert++;
-            bubbleup(next);
-        }
-        void swap(int x,int y) {
-            pair<int,int> t = node[x];
-            node[x] = node[y];
-            node[y] = t;
-        }
-        // deletes the min from the heap
-        pair<int,int> pop_min () {
-            pair<int,int> t = node[1];
-            swap(1,next);
-            next--;
-            bubbledown(1);
-            return t;
-        }
-        bool isEmpty () {
-		    return next==0;
-	    }
-       
-        void bubbledown (int i) {
-            int lc = 2*i;
-            if(next<lc) return;
-            if(next==lc) {
-                if(node[lc].second<node[i].second) swap(lc,i);
-            } else {
-                int lr = 2*i+1;
-                int index = node[lr].second<node[lc].second?lr:lc;
-                swap(index,i);
-                bubbledown(index);
-            }
-        }
-};
 
 // Contruct heap node from page and index
 pair<int,int> heapnode (PageHandler& ph,int page_index,int index) {
@@ -898,43 +917,3 @@ void Insertion(FileHandler& fh, int t){
 	}
 }
 
-int main() {
-	FileManager fm;
-	createInput(fm,"test_input1.txt",1000,7);
-	// FileHandler fh = fm.OpenFile("test_input1.txt");
-	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
-	// PageHandler ph = fh.FirstPage();
-	// MBSResult bsr = megaBinarySearch(fh,2083069270);
-	// cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
-	// cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
-	// cout<<bsr.type<<endl;
-	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
-	// printFile(fh);
-	// FileHandler fh1 = fm.OpenFile("insert_output1.txt");
-	// printFile(fh1);
-	// MBSResult mbsr = megaBinarySearch(fh,10000);
-	// cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
-	// cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
-	// fm.CloseFile(fh);
-	// fm.DestroyFile("test_input1");
-
-	// MERGE SORT
-	FileHandler fh_input = fm.OpenFile("test_input1.txt");
-	// printFile(fh_input);
-	MergeSort(fh_input,fm,"my_sort_output.txt");
-	// printFile(fh_input);
-	fm.CloseFile(fh_input);
-	// FileHandler fh_output = fm.OpenFile("sort_output2.txt");
-	
-	// cout<<"Sorted Page"<<endl;
-	// FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
-	// printFile(fh_sorted);
-	// cout<<"Given Output"<<endl;
-	// printFile(fh_output);
-	cout<<"My Output"<<endl;
-	FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
-	printFile(fh_my_output);
-	fm.DestroyFile("my_sort_output.txt");
-	fm.DestroyFile("test_input1.txt");
-	return 0;
-}
