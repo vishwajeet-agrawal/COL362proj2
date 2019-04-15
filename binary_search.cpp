@@ -297,7 +297,7 @@ BSResult BoundBinarySearch(PageHandler& ph,int t,char type){
 		}
 		else {
 			bsr.type='R';
-			bsr.result = make_pair(ph.GetPageNum(),PAGE_CONTENT_SIZE/4-1+1);
+			bsr.result = make_pair(ph.GetPageNum(),PAGE_CONTENT_SIZE/4+1);
 			return bsr;
 		}
 	}
@@ -320,7 +320,7 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 
 			}
 		}
-		return BSResult('F',pg,PAGE_CONTENT_SIZE/4-1);
+		return BSResult('F',pg,PAGE_CONTENT_SIZE/4);
 	} else {
 		for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
 			memcpy(&value, &data[i*4], sizeof(int));
