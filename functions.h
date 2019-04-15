@@ -25,7 +25,7 @@ void createInput(FileManager& fm, char* filename);
 void Insertion(FileHandler&, int,FileHandler&);
 void Insertion(FileHandler& fh, int t);
 pair<int,bool> ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value);
-pair<int,bool> ShiftPage (PageHandler &ph, int index, int value);
+// pair<int,bool> ShiftPage (PageHandler &ph, int index, int value);
 void PageCopy (PageHandler &source,PageHandler &target);
 BSResult BoundBinarySearch(PageHandler& ph,int t,char type);
 MBSResult megaBinarySearch(FileHandler& fh, int t);

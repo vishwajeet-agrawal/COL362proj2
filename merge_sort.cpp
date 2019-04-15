@@ -75,7 +75,7 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 	int run_index[runs];
 	for(int i=L;i<R;i++) {
 		string filename = getFilename(i,mr);
-		cout<<filename<<endl;
+		// cout<<filename<<endl;
 		runfiles[i-L] = fm.OpenFile(filename.c_str());
 		page[i-L] = runfiles[i-L].FirstPage();
 	}
@@ -162,7 +162,7 @@ int MergePass (int total_runs, int* max_run_size, FileManager& fm, int mr) {
 		int l = Nway*(i);
 		int r = min(Nway*(i+1),total_runs);
 		string file = getFilename(i,mr);
-		cout<<"N way sort "<<file<<endl;
+		// cout<<"N way sort "<<file<<endl;
 		NwayMerge(fm,l,r,file.c_str(),mr-1);   // N-way sort [L,R)
 	}
 
@@ -178,7 +178,7 @@ void MakeRunI (int L, int R, FileHandler& ifh, FileHandler& ofh) {
 	PageHandler pages[run_size];
 	int page_index[run_size];
 	int eof = -1;
-	cout<<"Run-size: "<<R-L<<endl;
+	// cout<<"Run-size: "<<R-L<<endl;
 	for(int i=L;i<R;i++) {
 		// cout<<"Page Requested: "<<i<<endl;
 		pages[i-L] = ifh.PageAt(i);
@@ -273,7 +273,7 @@ void SortAndCopyFile (FileHandler& output, FileHandler& input) {
 }
 // Create Intital Runs as txt file
 int CreateInitialRuns (FileHandler& input_file,FileManager& fm,int total_pages) {
-	cout<<"Creating Initial Runs"<<endl;
+	// cout<<"Creating Initial Runs"<<endl;
 	FileHandler sortedpage;
 	try {
 		sortedpage = fm.CreateFile("sortedpage.txt");	
@@ -285,7 +285,7 @@ int CreateInitialRuns (FileHandler& input_file,FileManager& fm,int total_pages) 
 
 	int max_Run_Size = BUFFER_SIZE-1;
 	int total_runs = ceil(((float)total_pages)/max_Run_Size);
-	cout<<"Total Initial Runs "<<total_runs<<endl;
+	// cout<<"Total Initial Runs "<<total_runs<<endl;
 	for(int i=0;i<total_runs;i++) {
 		int l = max_Run_Size*i;
 		int r = min(max_Run_Size*(i+1),total_pages);
@@ -305,17 +305,17 @@ void MergeSort(const char * inputfilename, FileManager& fm, const char * mergeFi
     FileHandler fh = fm.OpenFile(inputfilename);
 	PageHandler ph = fh.LastPage();
 	int total_pages = ph.GetPageNum()+1;
-	cout<<"Total Pages:"<<total_pages<<endl;
+	// cout<<"Total Pages:"<<total_pages<<endl;
 	fh.UnpinPage(total_pages-1);
 	int total_runs = CreateInitialRuns(fh,fm,total_pages);
 	int max_run_size = BUFFER_SIZE-1;
 	int merge_round=0;
 	while(total_runs>BUFFER_SIZE-1) {
 		merge_round++;
-		cout<<"Merge Pass "<<merge_round<<endl;
+		// cout<<"Merge Pass "<<merge_round<<endl;
 		total_runs = MergePass(total_runs,&max_run_size,fm,merge_round);
 	}
-	cout<<"Final N-way merge"<<endl;
+	// cout<<"Final N-way merge"<<endl;
 	NwayMerge(fm,0,total_runs,mergeFilename,merge_round);
     fm.CloseFile(fh);
 }

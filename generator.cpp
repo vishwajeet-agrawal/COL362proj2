@@ -18,11 +18,6 @@ int main(int argc, const char * argv[]) {
 	FileManager fm;
 	char* data;
 
-	if(argc < 3) {
-		cout << "Run format : ./generator <test file path> <sorted readable file path>" << endl;
-		exit(1);
-	}
-
 	srand(time(0));
 
 	int numPages = 0;
@@ -33,14 +28,10 @@ int main(int argc, const char * argv[]) {
 
 	cout << "Enter numPages " << endl;
 	cin >> numPages;
-	cout << "Enter occupancyFactor as number of ints in a page: " << endl;
-	cin >> occupancy;
 	cout << "Enter occupancyFactor as number of ints in last page: " << endl;
 	cin >> occupancyLast;
 	cout << "Enter max value for ints generated: " << endl;
 	cin >> maxInt;
-	cout << "Enter whether you want sorted(1) or unsorted(0) file as int: " << endl;
-	cin >> sorted;
 
 	const char * testFile = argv[1];
 	const char * writeFile = argv[2];
