@@ -546,6 +546,7 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 	int run_index[runs];
 	for(int i=L;i<R;i++) {
 		string filename = getFilename(i,mr);
+		cout<<filename<<endl;
 		runfiles[i-L] = fm.OpenFile(filename.c_str());
 		page[i-L] = runfiles[i-L].FirstPage();
 	}
@@ -555,7 +556,6 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 	FileHandler outputFile = fm.CreateFile(merge_output);
 	PageHandler outputPage = outputFile.NewPage();
 	
-	cout<<"Initialized PageHandler and FileHandler: Now heap"<<endl;
 	// Initializing the heap
 	heap_nway X;
 	for(int i=0;i<runs;i++) {
@@ -565,6 +565,7 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 		if(t!=INT_MIN) X.insert(make_pair(i,t));
 	}
 
+	cout<<"Sorting through heap";
 	// Sorting through heap
 	pair<int,int> min_node;
 	while(!X.isEmpty()) {
@@ -583,6 +584,7 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 		if(run_index[i]==PAGE_CONTENT_SIZE/4) {
 			int pg = page[i].GetPageNum();
 			runfiles[i].UnpinPage(pg);
+			cout<<"Page request"<<pg<<endl;
 			page[i] = runfiles[i].NextPage(pg);
 			if (page[i].GetPageNum()!=-1) {
 				run_index[i]=0;
