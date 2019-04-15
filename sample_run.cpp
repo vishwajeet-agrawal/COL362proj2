@@ -64,7 +64,7 @@ class heap_nway {
 int main() {
 	FileManager fm;
 	// insertion_test(fm);
-	// createInput(fm,"test_input1.txt",2000,0);
+	createInput(fm,"test_input1.txt",2000,7);
 	// FileHandler fh = fm.OpenFile("test_input1.txt");
 	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
 	// PageHandler ph = fh.FirstPage();
@@ -83,20 +83,20 @@ int main() {
 	// fm.DestroyFile("test_input1");
 
 	// MERGE SORT
-	FileHandler fh_input = fm.OpenFile("sort_input2.txt");
-	printFile(fh_input,true);
-	MergeSort(fh_input,fm,"my_sort_output.txt");
+	// FileHandler fh_input = fm.OpenFile("test_input1.txt");
 	// printFile(fh_input);
-	fm.CloseFile(fh_input);
-	FileHandler fh_output = fm.OpenFile("sort_output2.txt");
-	cout<<"Given Output"<<endl;
-	printFile(fh_output);
+	MergeSort("test_input1.txt",fm,"my_sort_output.txt");
+	// printFile(fh_input);
+	// fm.CloseFile(fh_input);
+	// FileHandler fh_output = fm.OpenFile("sort_output2.txt");
+	// cout<<"Given Output"<<endl;
+	// printFile(fh_output);
 	// cout<<"Sorted Page"<<endl;
 	// FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
 	// printFile(fh_sorted);
 	cout<<"My Output"<<endl;
 	FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
-	printFile(fh_my_output);
+	printFile(fh_my_output,true);
 	fm.DestroyFile("my_sort_output.txt");
 	fm.DestroyFile("test_input1.txt");
 	return 0;
@@ -159,7 +159,7 @@ void printFile(FileHandler& fh, bool Complete) {
 } 
 
 void createInput(FileManager& fm,const char* filename,int page,int lastoff){
-	int total_num = (page-1)*1023+lastoff;
+	int total_num = (page-1)*1022+lastoff;
 	int arr[total_num];
 	for(int i=0;i<total_num;i++) {
 		arr[i]=i+1;
@@ -171,6 +171,11 @@ void createInput(FileManager& fm,const char* filename,int page,int lastoff){
 		PageHandler ph = fh.NewPage();
 		char* data = ph.GetData();
 		for(int i=0,num;i<PAGE_CONTENT_SIZE/4;i++){
+			if(i==PAGE_CONTENT_SIZE/4-1) {
+				int t = INT_MIN;
+				memcpy(&data[i*4],&t,sizeof(int));	
+				continue;
+			}
 			if(j==page-1 && i==lastoff) {
 				int t =INT_MIN;
 				memcpy(&data[i*4],&t,sizeof(int));	
@@ -476,7 +481,7 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 	int pg = ph.GetPageNum();
 	int value;
 	if(type =='L') {
-		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
 			memcpy(&value, &data[i*4], sizeof(int));
 			if(value==-2147483648) {
 				if(i==0) return BSResult('L',pg,i+1);
@@ -488,9 +493,9 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 
 			}
 		}
-		return BSResult('F',pg,PAGE_CONTENT_SIZE/4);
+		return BSResult('F',pg,PAGE_CONTENT_SIZE/4-1);
 	} else {
-		for(int i=0;i<PAGE_CONTENT_SIZE/4;i++) {
+		for(int i=0;i<PAGE_CONTENT_SIZE/4-1;i++) {
 			memcpy(&value, &data[i*4], sizeof(int));
 			if(value==-2147483648) {
 				if(i==0) return BSResult('L',pg,i+1);
@@ -501,7 +506,7 @@ BSResult SearchLastPage (PageHandler& ph, int t,char type) {
 				else return BSResult('F',pg,i+1);	
 			}
 		}		
-		return BSResult('F',pg,PAGE_CONTENT_SIZE/4+1);
+		return BSResult('F',pg,PAGE_CONTENT_SIZE/4);
 	}
 }
 
@@ -623,7 +628,8 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 	pair<int,int> min_node;
 	while(!X.empty()) {
 		output_eof++;
-		if(output_eof==PAGE_CONTENT_SIZE/4) {
+		if(output_eof==PAGE_CONTENT_SIZE/4-1) {
+			pushValuetoPage(outputPage,output_eof,INT_MIN);
 			outputFile.UnpinPage(outputPage.GetPageNum());
 			outputPage = outputFile.NewPage();
 			output_eof = 0;
@@ -633,7 +639,7 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 
 		int i = min_node.second;
 		run_index[i]++;
-		if(run_index[i]==PAGE_CONTENT_SIZE/4) {
+		if(run_index[i]==PAGE_CONTENT_SIZE/4-1) {
 			int pg = page[i].GetPageNum();
 			runfiles[i].UnpinPage(pg);
 			try {
@@ -660,9 +666,9 @@ void NwayMerge (FileManager& fm,int L, int R, const char * merge_output, int mr)
 	}
 
 	// put INT_MIN AT THE END OF THE FILE
-	if(output_eof!=PAGE_CONTENT_SIZE/4) {
+	// if(output_eof!=PAGE_CONTENT_SIZE/4) {
 		pushValuetoPage(outputPage,output_eof+1,INT_MIN);
-	}
+	// }
 	// UNPIN, FLUSH AND CLOSE FILE
 	outputFile.UnpinPage(outputPage.GetPageNum());
 	outputFile.FlushPages();
@@ -722,7 +728,8 @@ void MakeRunI (int L, int R, FileHandler& ifh, FileHandler& ofh) {
 	// X.printheap();
 	while(!X.empty()) {
 		eof++;
-		if(eof==PAGE_CONTENT_SIZE/4) {
+		if(eof==PAGE_CONTENT_SIZE/4-1) {
+			pushValuetoPage(outputPage,eof,INT_MIN);
 			ofh.UnpinPage(outputPage.GetPageNum());
 			outputPage = ofh.NewPage();
 			eof = 0;
@@ -733,7 +740,7 @@ void MakeRunI (int L, int R, FileHandler& ifh, FileHandler& ofh) {
 
 		int i = min_node.second;
 		page_index[i]++;
-		if(page_index[i]==PAGE_CONTENT_SIZE/4) {
+		if(page_index[i]==PAGE_CONTENT_SIZE/4-1) {
 			int pg = pages[i].GetPageNum();
 			ifh.UnpinPage(pg);
 		}
@@ -749,16 +756,16 @@ void MakeRunI (int L, int R, FileHandler& ifh, FileHandler& ofh) {
 			}
 		}
 	}
-	if(eof!=PAGE_CONTENT_SIZE/4) {
-		pushValuetoPage(outputPage,eof+1,INT_MIN);
-	}
+	// if(eof!=PAGE_CONTENT_SIZE/4-1) {
+	pushValuetoPage(outputPage,eof+1,INT_MIN);
+	// }
 	ofh.FlushPages();
 }
 
 // Sort Complete Page  -- check if works
 void SortPage (PageHandler &page) {
 	char* data = page.GetData();
-	int N = PAGE_CONTENT_SIZE/4;
+	int N = (PAGE_CONTENT_SIZE/4)-1;
 	int * A = (int*) data;
 	sort(A,A+N);
 }
@@ -833,7 +840,8 @@ int CreateInitialRuns (FileHandler& input_file,FileManager& fm,int total_pages) 
 	return total_runs;
 }
 
-void MergeSort(FileHandler& fh, FileManager& fm, const char * mergeFilename){
+void MergeSort(const char * inputfilename, FileManager& fm, const char * mergeFilename){
+	FileHandler fh = fm.OpenFile(inputfilename);
 	PageHandler ph = fh.LastPage();
 	int total_pages = ph.GetPageNum()+1;
 	cout<<"Total Pages:"<<total_pages<<endl;
@@ -848,6 +856,7 @@ void MergeSort(FileHandler& fh, FileManager& fm, const char * mergeFilename){
 	}
 	cout<<"Final N-way merge"<<endl;
 	NwayMerge(fm,0,total_runs,mergeFilename,merge_round);
+	fm.CloseFile(fh);
 }
 
 int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound

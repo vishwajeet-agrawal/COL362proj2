@@ -12,6 +12,9 @@ buffer_manager.o : buffer_manager.cpp
 file_manager.o : file_manager.cpp
 	g++ -g -std=c++11 -c file_manager.cpp
 
+merge_sort.o : file_manager.cpp
+	g++ -g -std=c++11 -c file_manager.cpp
+
 clean :
 	rm -f *.o
 	rm -f sample_run
