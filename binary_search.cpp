@@ -16,33 +16,45 @@ int main(int argc, char* argv[]){
     }
     else {
         int start = lb_pos+1;
-        int start_page = lb_page+1;
-        if (start==(PAGE_CONTENT_SIZE-4)/4){
-            start =0;
+        int start_page = lb_page;
+        if (start==(PAGE_CONTENT_SIZE)/4){
+            // cout<<"ed"<<endl;
+            start =1;
             start_page++;
-            if (start_page==ub_page+1 && ub_pos==start){
+        }
+            if (start_page==ub_page && ub_pos==start){
                 cout<<"-1,-1"<<endl;
                 
             }
             else{
-                for(int i=start_page;i<=ub_page;i++){
-                    for(int j=start;j<(PAGE_CONTENT_SIZE-4)/4;j++){
+                // cout<<start_page<<" "<<ub_page<<endl;
+                for(int i=start_page;i<ub_page;i++){
+                    // cout<<start<<endl;
+                    for(int j=start;j<(PAGE_CONTENT_SIZE)/4;j++){
                         cout<<i<<","<<j<<endl;
                     }
                 }
-                for(int j=1;j<ub_pos;j++){
-                    cout<<ub_page+1<<","<<j<<endl;
+                if (start_page==ub_page){
+                    for(int j=start;j<ub_pos;j++){
+                        cout<<ub_page<<","<<j<<endl;
+                    }
+                    
+                }
+                else{
+                    for(int j=1;j<ub_pos;j++){
+                        cout<<ub_page<<","<<j<<endl;
+                    }
                 }
             }
         }
-    }
+    
 } 
 pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 	PageHandler pgi = fh.FirstPage();
 	PageHandler pgf = fh.LastPage();
 	int first_pgn = pgi.GetPageNum();
 	int last_pgn = pgf.GetPageNum();
-	cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
+	// cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
 	//checking the first page
 
 	//check if first page = last page
@@ -115,8 +127,8 @@ pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 				}
 			}
 			catch(...){
-				cout<<"No more space in buffer, initiating binary search in pinned pages"<<endl;
-				cout<<no_pages<<" pages loaded in buffer"<<endl;
+				// cout<<"No more space in buffer, initiating binary search in pinned pages"<<endl;
+				// cout<<no_pages<<" pages loaded in buffer"<<endl;
 				int hi = no_pages-1;
 				int lo = 0;
 				int mid;
