@@ -1,101 +1,45 @@
 #include "binary_search.h"
-#include <fstream>
-#include <algorithm>
-#include <iostream>
-#define MAX_ARRAY_SIZE 100000
-void InsertArray(int* input, int size, FileHandler& fh);
-pair<int,bool> ShiftPage (PageHandler &ph, int index, int value);
-void Insertion(FileHandler& fh, int t);
-
+#include  <iostream>
 using namespace std;
 int main(int argc, char* argv[]){
-    if (argc<3){
-        return 1;
-    }
+    if (argc<3){return 1;}
     FileManager fm;
     FileHandler fh = fm.OpenFile(argv[1]);
-    int counter=0;
-    fstream fs;
-    fs.open(argv[2]);
-    int* input = new int[MAX_ARRAY_SIZE];
-    while(true){
-        while(counter<MAX_ARRAY_SIZE && !fs.eof()){
-            fs>>*(input+counter);
-            counter++;
-        }
-        InsertArray(input,counter,fh);
-        if(counter==MAX_ARRAY_SIZE){
-            counter=0;
-        }
-        else{
-            break;
+    int tos = stoi(argv[1]);
+    MBSResult mbsr = megaBinarySearch(fh,tos);
+    int lb_page = mbsr.lower_bound.first;
+    int ub_page = mbsr.upper_bound.first;
+    int lb_pos = mbsr.lower_bound.second;
+    int ub_pos = mbsr.upper_bound.second;
+    if (lb_page>ub_page || (lb_page==ub_page && ub_pos-lb_pos<=1)){
+        cout<<"-1,-1"<<endl;
+    }
+    else {
+        int start = lb_pos+1;
+        int start_page = lb_page;
+        if (start==(PAGE_CONTENT_SIZE-4)/4){
+            start =0;
+            start_page++;
+            if (start_page==ub_page && ub_pos==start){
+                cout<<"-1,-1"<<endl;
+                return;
+            }
+            else{
+                for(int i=start_page;i<ub_page;i++){
+                    for(int j=start;j<(PAGE_CONTENT_SIZE-4)/4;j++){
+                        cout<<
+                    }
+                }
+            }
         }
     }
-}
-void InsertArray(int* input, int size, FileHandler& fh){
-    sort(input,input+size);
-    for(int i=0;i<size;i++){
-        Insertion(fh,input[i]);
-    }
-}
-pair<int,bool> ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
-	char *data = ph.GetData();
-	int t,r;
-	bool flag = false;
-	memcpy(&t,&data[(PAGE_CONTENT_SIZE-8)],sizeof(int));
-	for(int i=(PAGE_CONTENT_SIZE-8)/4;i>index;i--) {
-		memcpy(&data[i*4],&data[(i-1)*4],sizeof(int));
-		memcpy(&r,&data[i*4],sizeof(int));
-		if(r==INT_MIN) flag = true;
-	}
-	if (t==INT_MIN) {memcpy(&data[PAGE_CONTENT_SIZE-4],&t,sizeof(int));
-					flag==true;}
-	memcpy(&data[index*4],&value,sizeof(int));
-	if(flag==true) return (make_pair(t,false));
-	else return make_pair(t,true);
 } 
-void Insertion(FileHandler& fh, int t){
-	pair<int,int> mbsr = boundMegaBinarySearch(fh,t,'U');
-	int pg = mbsr.first;
-	int pos = mbsr.second;
-	PageHandler ph = fh.LastPage();
-
-	int last_pgn = ph.GetPageNum();
-	fh.UnpinPage(last_pgn);
-	fh.FlushPages();
-		PageHandler ph1 = fh.NextPage(pg-1);
-		pair<int,bool> val = ShiftPage(ph1,pos-1,t);
-		fh.MarkDirty(pg++);
-		// fh.UnpinPage(pg++);
-		// fh.UnpinPage(pg++);
-		// fh.FlushPage(0);
-		
-		// ph1 = fh.FirstPage();
-
-		while(true){
-			if (pg>last_pgn){
-				break;
-			}
-			ph1 = fh.PageAt(pg);
-			val = ShiftPage(ph1,0,val.first);
-			fh.MarkDirty(pg++);
-			// fh.FlushPage(pg-1);
-		}
-		if (val.second==true){
-			ph1 = fh.NewPage();
-			ShiftPage(ph1,0,val.first);
-			fh.MarkDirty(ph1.GetPageNum());
-		}
-		fh.FlushPages();
-	
-}
-
 pair<int,int> boundMegaBinarySearch(FileHandler& fh, int t,char LU){
 	PageHandler pgi = fh.FirstPage();
 	PageHandler pgf = fh.LastPage();
 	int first_pgn = pgi.GetPageNum();
 	int last_pgn = pgf.GetPageNum();
-	std::cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
+	cout<<"The file has "<<last_pgn-first_pgn+1<<" pages"<<endl;
 	//checking the first page
 
 	//check if first page = last page

@@ -22,7 +22,6 @@ struct MBSResult{
 	pair<int,int> upper_bound;
 };
 void createInput(FileManager& fm, char* filename);
-void Insertion(FileHandler&, int,FileHandler&);
 void Insertion(FileHandler& fh, int t);
 pair<int,bool> ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value);
 // pair<int,bool> ShiftPage (PageHandler &ph, int index, int value);
