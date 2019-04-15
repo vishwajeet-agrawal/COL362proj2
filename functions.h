@@ -7,6 +7,7 @@
 #include <vector>
 #include <math.h>
 #include<string>
+#include<queue>
 #include<algorithm>
 #include <list>
 #define INT_MIN -2147483648
@@ -53,7 +54,7 @@ void SortLastPage (PageHandler &page);
 void SortAndCopyFile (FileHandler& output, FileHandler& input);
 int CreateInitialRuns (FileHandler& input_file,FileManager& fm,int total_pages);
 
-void MergeSort(FileHandler& fh, FileManager& fm, const char * mergeFilename);
+void MergeSort(const char * inputfilename, FileManager& fm, const char * mergeFilename);
 
 pair<int,int> heapnode (PageHandler& ph,int page_index,int index) ;
 #endif
