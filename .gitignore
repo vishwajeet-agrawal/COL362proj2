@@ -1,6 +1,5 @@
 .vscode
 *.o
 raws
-*.txt
 insertion_tasks.cpp
 sort_tasks.cpp
