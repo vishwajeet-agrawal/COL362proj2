@@ -20,10 +20,10 @@ sample_run.o : sample_run.cpp buffer_manager.cpp file_manager.cpp
 merge_sort.o: merge_sort.cpp file_manager.cpp buffer_manager.cpp
 	g++ -g -std=c++11 -c merge_sort.cpp
 
-insertion.o: insertion.cpp file_manager.cpp buffer_manager.cpp
+insertion.o: insertion.cpp file_manager.cpp buffer_manager.cpp 
 	g++ -g -std=c++11 -c insertion.cpp
 
-binary_search.o: binary_search.cpp file_manager.cpp buffer_manager.cpp
+binary_search.o: binary_search.cpp file_manager.cpp buffer_manager.cpp binary_search.h
 	g++ -g -std=c++11 -c binary_search.cpp
 
 buffer_manager.o : buffer_manager.cpp
