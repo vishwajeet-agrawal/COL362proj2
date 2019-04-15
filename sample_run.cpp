@@ -9,6 +9,7 @@ typedef pair<int,int> pi;
 
 int main() {
 	FileManager fm;
+<<<<<<< HEAD
 	// insertion_test(fm);
 	
 	// BINARY SEARCH
@@ -26,10 +27,32 @@ int main() {
 	cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
 	cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
 	fm.CloseFile(fh);
+=======
+	insertion_test(fm);
+	fm.ClearBuffer();
+	// createInput(fm,"test_input1.txt",1000,7);
+	// FileHandler fh = fm.OpenFile("test_input1.txt");
+	// FileHandler fh = fm.OpenFile("insert_testcase1.txt");
+	// PageHandler ph = fh.FirstPage();
+	// MBSResult bsr = megaBinarySearch(fh,2083069270);
+	// cout<<"lower bound: "<<bsr.lower_bound.first<<" "<<bsr.lower_bound.second<<endl;
+	// cout<<"upper bound: "<<bsr.upper_bound.first<<" "<<bsr.upper_bound.second<<endl;
+	// cout<<bsr.type<<endl;
+	// cout<<bsr.result.first<<' '<<bsr.result.second<<endl;
+	// printFile(fh);
+	// FileHandler fh1 = fm.OpenFile("insert_output1.txt");
+	// printFile(fh1);
+	// MBSResult mbsr = megaBinarySearch(fh,10000);
+	// cout<<"lower bound: "<<mbsr.lower_bound.first<<" "<<mbsr.lower_bound.second<<endl;
+	// cout<<"upper bound: "<<mbsr.upper_bound.first<<" "<<mbsr.upper_bound.second<<endl;
+	// fm.CloseFile(fh);
+	// fm.DestroyFile("test_input1");
+>>>>>>> 025dcf16cc01ff0d78215597d840bbd4df876da0
 
 	// MERGE SORT
 	// createInput(fm,"test_input1.txt",2000,7);
 	// FileHandler fh_input = fm.OpenFile("test_input1.txt");
+<<<<<<< HEAD
 	// printFile(fh_input);
 	// MergeSort("test_input1.txt",fm,"my_sort_output.txt");
 	// // printFile(fh_input);
@@ -43,21 +66,45 @@ int main() {
 	// cout<<"My Output"<<endl;
 	// FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
 	// printFile(fh_my_output,true);
+=======
+	// // printFile(fh_input);
+	// MergeSort(fh_input,fm,"my_sort_output.txt");
+	// // printFile(fh_input);
+	// fm.CloseFile(fh_input);
+	// // FileHandler fh_output = fm.OpenFile("sort_output2.txt");
+	
+	// // cout<<"Sorted Page"<<endl;
+	// // FileHandler fh_sorted = fm.OpenFile("sortedpage.txt");
+	// // printFile(fh_sorted);
+	// // cout<<"Given Output"<<endl;
+	// // printFile(fh_output);
+	// cout<<"My Output"<<endl;
+	// FileHandler fh_my_output = fm.OpenFile("my_sort_output.txt");
+	// // printFile(fh_my_output);
+>>>>>>> 025dcf16cc01ff0d78215597d840bbd4df876da0
 	// fm.DestroyFile("my_sort_output.txt");
 	// fm.DestroyFile("test_input1.txt");
 	return 0;
 }
 void insertion_test(FileManager& fm){
 
-	try{
-		createSortedInput(fm,"insertion_input1.txt",20,10);
+	// try{
+		createSortedInput(fm,"insertion_input1.txt",20,11);
 		FileHandler fh = fm.OpenFile("insertion_input1.txt");
-		printFile(fh,false);
-	}
-	catch(...){
+		// FileHandler fho = fm.CreateFile("insertion_output1.txt");
+		// fho.FlushPages();
+		// fho = fm.OpenFile("insertion_output1.txt");
+		Insertion(fh,20000);
+		bool b;
+		fm.ClearBuffer();
+		PageHandler phh = fh.FirstPage();
+		printFile(fh,true);
+	// }
+	// catch(...){
+	// 	cout<<"error"<<endl;
 		fm.DestroyFile("insertion_input1.txt");
-		fm.DestroyFile("insertion_output1.txt");
-	}
+		// fm.DestroyFile("insertion_output1.txt");
+	// }
 }
 
 // Get Value from char array or page
@@ -468,19 +515,19 @@ void Insertion(FileHandler& fhi, int t,FileHandler& fho){
 	for(int i=0;i<pg;i++){
 		pho = fho.NewPage();
 		PageCopy(phi,pho);
-		fho.DisposePage(pho.GetPageNum());
+		fho.UnpinPage(pho.GetPageNum());
 		fhi.UnpinPage(phi.GetPageNum());
 		if (i!=last_pgn)
 			phi = fhi.NextPage(i);
 	}
 	pho = fho.NewPage();
-	int val = ShiftPage(phi,pho,pos-1,t);
-	fho.DisposePage(pho.GetPageNum());
+	pair<int,bool> val = ShiftPage(phi,pho,pos-1,t);
+	fho.UnpinPage(pho.GetPageNum());
 	fhi.UnpinPage(phi.GetPageNum());
 	
 	while(true){
-		if (++pg>last_pgn){
-			if (val == INT_MIN){
+		if (++pg>last_pgn ){
+			if (val.second == false){
 				pho = fho.NewPage();
 
 				char* dat = pho.GetData();
@@ -488,7 +535,7 @@ void Insertion(FileHandler& fhi, int t,FileHandler& fho){
 				memcpy(dat,&int_min,sizeof(int));
 				memset(dat+4,0,PAGE_CONTENT_SIZE-4);
 
-				fho.DisposePage(pho.GetPageNum());
+				fho.UnpinPage(pho.GetPageNum());
 				fho.FlushPages();
 				return;
 			}
@@ -499,10 +546,12 @@ void Insertion(FileHandler& fhi, int t,FileHandler& fho){
 		}
 		phi = fhi.PageAt(pg);
 		pho = fho.NewPage();
-		val = ShiftPage(phi,pho,0,val);
+		val = ShiftPage(phi,pho,0,val.first);
 		fhi.UnpinPage(pg);
-		fho.DisposePage(pho.GetPageNum());
+		fho.UnpinPage(pho.GetPageNum());
+		
 	}
+	fho.FlushPages();
 }
 
 // Copy Page Content 
@@ -790,7 +839,7 @@ void MergeSort(const char * inputfilename, FileManager& fm, const char * mergeFi
 	FileHandler fh = fm.OpenFile(inputfilename);
 	PageHandler ph = fh.LastPage();
 	int total_pages = ph.GetPageNum()+1;
-	cout<<"Total Pages:"<<total_pages<<endl;
+	std::cout<<"Total Pages:"<<total_pages<<endl;
 	fh.UnpinPage(total_pages-1);
 	int total_runs = CreateInitialRuns(fh,fm,total_pages);
 	int max_run_size = BUFFER_SIZE-1;
@@ -805,71 +854,76 @@ void MergeSort(const char * inputfilename, FileManager& fm, const char * mergeFi
 	fm.CloseFile(fh);
 }
 
-int ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound
-	char *source_data = ph.GetData();
-	char *target_data = nph.GetData();
-	int t,r;
-	memcpy(&t,&source_data[PAGE_CONTENT_SIZE-4],sizeof(int));
-	for(int i=PAGE_CONTENT_SIZE-4;i>index*4;i-=4) {
-		memcpy(&target_data[i],&source_data[i-4],sizeof(int));
-		memcpy(&r,&target_data[i],sizeof(int));
-		if(r==INT_MIN) t = -1;
-	}
-	memcpy(&target_data[index*4],&value,sizeof(int));
-	for(int i = (index-1)*4;i>=0;i=i-4) {
-		memcpy(&target_data[i],&source_data[i],sizeof(int));
-	}
-	return t;
-}
+// pair<int,bool> ShiftPage (PageHandler &ph,PageHandler &nph, int index, int value) { // indexing starting with 0 // index is upper bound
+// 	char *source_data = ph.GetData();
+// 	char *target_data = nph.GetData();
+// 	int t,r;
+// 	bool flag=false;
+// 	memcpy(&t,&source_data[PAGE_CONTENT_SIZE-4],sizeof(int));
+// 	for(int i=PAGE_CONTENT_SIZE-4;i>index*4;i-=4) {
+// 		memcpy(&target_data[i],&source_data[i-4],sizeof(int));
+// 		memcpy(&r,&target_data[i],sizeof(int));
+// 		if(r==INT_MIN) flag=true;
+// 	}
+// 	memcpy(&target_data[index*4],&value,sizeof(int));
+// 	for(int i = (index-1)*4;i>=0;i=i-4) {
+// 		memcpy(&target_data[i],&source_data[i],sizeof(int));
+// 	}
+// 	if (flag){
+// 		return make_pair(t,false);
+// 	}
+// 	return make_pair(t,true);
+// }
 
-int ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
+pair<int,bool> ShiftPage (PageHandler &ph, int index, int value) { // indexing starting with 0 // index is upper bound
 	char *data = ph.GetData();
 	int t,r;
 	bool flag = false;
-	memcpy(&t,&data[(PAGE_CONTENT_SIZE-1)*4],sizeof(int));
-	for(int i=PAGE_CONTENT_SIZE-1;i>index;i--) {
+	memcpy(&t,&data[(PAGE_CONTENT_SIZE-8)],sizeof(int));
+	for(int i=(PAGE_CONTENT_SIZE-8)/4;i>index;i--) {
 		memcpy(&data[i*4],&data[(i-1)*4],sizeof(int));
 		memcpy(&r,&data[i*4],sizeof(int));
 		if(r==INT_MIN) flag = true;
 	}
+	if (t==INT_MIN) {memcpy(&data[PAGE_CONTENT_SIZE-4],&t,sizeof(int));
+					flag==true;}
 	memcpy(&data[index*4],&value,sizeof(int));
-	if(flag==true) return INT_MIN;
-	else return t;
+	if(flag==true) return (make_pair(t,false));
+	else return make_pair(t,true);
 } 
 void Insertion(FileHandler& fh, int t){
 	pair<int,int> mbsr = boundMegaBinarySearch(fh,t,'U');
 	int pg = mbsr.first;
 	int pos = mbsr.second;
 	PageHandler ph = fh.LastPage();
+
 	int last_pgn = ph.GetPageNum();
 	fh.UnpinPage(last_pgn);
-	if (last_pgn<pg){
-		PageHandler ph1 = fh.NewPage();
-		ShiftPage(ph1,pos-1,t);
-		fh.DisposePage(ph1.GetPageNum());
-	}
-	else{
-		PageHandler ph1 = fh.PageAt(pg);
-		int val = ShiftPage(ph1,pos-1,t);
-		fh.DisposePage(pg++);
-		if (val == INT_MIN){
-			fh.FlushPage(pg-1);
-			return;
-		}
+	fh.FlushPages();
+		PageHandler ph1 = fh.NextPage(pg-1);
+		pair<int,bool> val = ShiftPage(ph1,pos-1,t);
+		fh.MarkDirty(pg++);
+		// fh.UnpinPage(pg++);
+		// fh.UnpinPage(pg++);
+		// fh.FlushPage(0);
+		
+		// ph1 = fh.FirstPage();
+
 		while(true){
 			if (pg>last_pgn){
 				break;
 			}
 			ph1 = fh.PageAt(pg);
-			val = ShiftPage(ph1,0,val);
-			fh.DisposePage(pg++);
+			val = ShiftPage(ph1,0,val.first);
+			fh.MarkDirty(pg++);
+			// fh.FlushPage(pg-1);
 		}
-		if (val!=INT_MIN){
+		if (val.second==true){
 			ph1 = fh.NewPage();
-			ShiftPage(ph1,0,val);
-			fh.DisposePage(ph1.GetPageNum());
+			ShiftPage(ph1,0,val.first);
+			fh.MarkDirty(ph1.GetPageNum());
 		}
 		fh.FlushPages();
-	}
+	
 }
 
