@@ -30,5 +30,4 @@ int main(int argc, char* argv[]){
 }
 void InsertArray(int* input, int size, FileHandler& fh){
     sort(input,input+size);
-    
 }
