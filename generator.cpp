@@ -21,7 +21,7 @@ int main(int argc, const char * argv[]) {
 	srand(time(0));
 
 	int numPages = 0;
-	int occupancy = 0;
+	int occupancy = 1022;
 	int occupancyLast = 0;
 	int maxInt = 0;
 	int sorted = 0;
@@ -38,8 +38,7 @@ int main(int argc, const char * argv[]) {
 
 	FileHandler fh = fm.CreateFile(testFile);
 
-	// int n = (numPages - 1)*occupancy + occupancyLast;
-	int n = 200000;
+	int n = (numPages - 1)*occupancy + occupancyLast;
 	int arr[n];
 
 	for (int i = 0; i < n; i++) {
